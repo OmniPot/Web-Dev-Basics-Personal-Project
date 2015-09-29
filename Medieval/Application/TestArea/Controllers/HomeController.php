@@ -1,6 +1,6 @@
 <?php
 
-namespace Medieval\Application\Controllers;
+namespace Medieval\Application\TestArea\Controllers;
 
 class HomeController extends BaseController {
 

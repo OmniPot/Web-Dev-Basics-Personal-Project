@@ -1,13 +1,13 @@
 <?php
 
-namespace Medieval\Application\Controllers;
+namespace Medieval\Application\TestArea\Controllers;
 
 use Medieval\Framework\View;
 
-use Medieval\Application\Models\User;
+use Medieval\Application\TestArea\Models\User;
 
-use Medieval\Application\ViewModels\RegisterViewModel;
-use Medieval\Application\ViewModels\LoginViewModel;
+use Medieval\Application\TestArea\ViewModels\RegisterViewModel;
+use Medieval\Application\TestArea\ViewModels\LoginViewModel;
 
 class UsersController extends BaseController {
 

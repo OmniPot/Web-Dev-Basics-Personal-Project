@@ -2,7 +2,7 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Application\Config\DatabaseConfig;
+use Medieval\Framework\Config\DatabaseConfig;
 
 class App {
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Medieval\Application\Controllers;
+namespace Medieval\Application\TestArea\Controllers;
 
-use Medieval\Application\Config\DatabaseConfig;
+use Medieval\Framework\Config\DatabaseConfig;
 use Medieval\Application\Config\RoutingConfig;
 
 use Medieval\Framework\Database;

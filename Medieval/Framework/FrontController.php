@@ -2,14 +2,17 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Application\Config\MainConfig;
 use Medieval\Application\Config\RoutingConfig;
 
 class FrontController {
 
     private static $_instance = null;
 
-    private $controllers = array();
+    private $_areas = array();
+
+    private $_areaName;
+    private $_customAreaName;
+
     private $_controller;
     private $_controllerName;
     private $_customControllerName;
@@ -25,7 +28,7 @@ class FrontController {
 
     public function dispatch() {
         if ( !$_GET || !isset( $_GET[ 'uri' ] ) ) {
-            header( 'Location: ' . RoutingConfig::DEFAULT_CONTROLLER . '/' . RoutingConfig::DEFAULT_ACTION );
+            header( 'Location: ' . 'home' . '/' . 'welcome' );
             exit;
         }
 
@@ -36,20 +39,21 @@ class FrontController {
             $this->processRequestUri( $uri );
 
             $fullControllerName =
-                MainConfig::VENDOR_NAMESPACE
-                . MainConfig::APPLICATION_NAMESPACE
-                . MainConfig::CONTROLLERS_NAMESPACE
-                . ucfirst( $this->_controllerName )
-                . MainConfig::CONTROLLERS_SUFFIX;
+                'Medieval\\' . 'Application\\' . $this->_areaName . 'Area\\'
+                . 'Controllers\\' . $this->_controllerName . 'Controller';
 
-            $this->registerControllers();
+            $this->registerAreaControllers();
             $this->registerControllerActions();
 
-            $this->validateController( $fullControllerName );
-            $this->validateControllerAction( $fullControllerName, $this->_actionName );
+            $this->validateUriRoute( $this->_areaName, $fullControllerName, $this->_actionName );
 
-            $this->initController( $fullControllerName, $this->_customControllerName, $this->_requestParams );
+            $this->initController(
+                $this->_areaName,
+                $fullControllerName,
+                $this->_customControllerName,
+                $this->_requestParams );
 
+            View::$areaName = $this->_areaName;
             View::$controllerName = $this->_controllerName;
             View::$actionName = $this->_actionName;
 
@@ -60,59 +64,104 @@ class FrontController {
     }
 
     private function processRequestUri( $uri ) {
-        if ( count( $uri ) >= 2 ) {
-            $this->_customControllerName = $this->_controllerName = trim( $uri[ 0 ] );
-            $this->_customActionName = $this->_actionName = trim( $uri[ 1 ] );
-            $this->_requestParams = array_slice( $uri, 2 );
+        if ( count( $uri ) >= 3 ) {
+            $this->_areaName = ucfirst( trim( $uri[ 0 ] ) );
+            $this->_customAreaName = trim( $uri[ 0 ] );
 
-            if ( RoutingConfig::ROUTER_TYPE != 'default' ) {
+            $this->_controllerName = ucfirst( trim( $uri[ 1 ] ) );
+            $this->_customControllerName = trim( $uri[ 1 ] );
+
+            $this->_actionName = trim( $uri[ 2 ] );
+            $this->_customActionName = trim( $uri[ 2 ] );
+
+            $this->_requestParams = array_slice( $uri, 3 );
+
+            if ( RoutingConfig::ROUTING_TYPE != 'default' ) {
                 $routeMappings = RoutingConfig::getMappings();
-                if ( isset( $routeMappings[ $this->_customControllerName ][ $this->_customActionName ] ) ) {
-                    $this->_controllerName = $routeMappings[ $this->_customControllerName ][ $this->_customActionName ][ 'controller' ];
-                    $this->_actionName = $routeMappings[ $this->_customControllerName ][ $this->_customActionName ][ 'action' ];
+
+                if ( !isset( $routeMappings[ $this->_customAreaName ] ) ) {
+                    throw new \Exception( 'Custom area: ' . $this->_customAreaName . ' not found' );
                 }
+                if ( !isset( $routeMappings[ $this->_customAreaName ][ $this->_customControllerName ] ) ) {
+                    throw new \Exception( 'Custom controller: '
+                        . $this->_customControllerName . ' not found in area: ' . $this->_customAreaName );
+                }
+                if ( !isset( $routeMappings[ $this->_customAreaName ] ) ) {
+                    throw new \Exception( 'Custom action: ' . $this->_customAreaName . ' not found in controller: '
+                        . $this->_customControllerName . ' in area: ' . $this->_customAreaName );
+                }
+
+                $this->_areaName = ucfirst( $routeMappings
+                [ $this->_customAreaName ]
+                [ $this->_customControllerName ]
+                [ $this->_customActionName ]
+                [ 'area' ] );
+
+                $this->_controllerName = ucfirst( $routeMappings
+                [ $this->_customAreaName ]
+                [ $this->_customControllerName ]
+                [ $this->_customActionName ]
+                [ 'controller' ] );
+
+                $this->_actionName = $routeMappings
+                [ $this->_customAreaName ]
+                [ $this->_customControllerName ]
+                [ $this->_customActionName ]
+                [ 'action' ];
             }
         }
     }
 
-    private function registerControllers() {
-        foreach ( glob( MainConfig::CONTROLLERS_FOLDER ) as $filePath ) {
-            if ( file_exists( $filePath ) && is_readable( $filePath ) ) {
-                $fileFullPath = MainConfig::VENDOR_NAMESPACE . str_replace( [ '/', '\\' ], DIRECTORY_SEPARATOR, $filePath );
-                $fileFullPath = substr( $fileFullPath, 0, -4 );
-                $this->controllers[ $fileFullPath ] = true;
+    private function registerAreaControllers() {
+
+        foreach ( glob( 'Application\\*Area' ) as $areaPath ) {
+            if ( file_exists( $areaPath ) && is_readable( $areaPath ) ) {
+                $areaName = str_replace( [ 'Application\\', 'Area' ], '', $areaPath );
+                $this->_areas[ $areaName ] = [ ];
+
+                foreach ( glob( 'Application\\' . $areaName . 'Area\\Controllers\\*Controller.php' ) as $controllerPath ) {
+                    if ( file_exists( $areaPath ) && is_readable( $areaPath ) ) {
+                        $fullPath = 'Medieval\\' . str_replace( '.php', '', $controllerPath );
+                        $this->_areas[ $areaName ][ $fullPath ] = [ ];
+                    } else {
+                        throw new \Exception( 'File not found or is not readable: ' . $controllerPath );
+                    }
+                }
             } else {
-                throw new \Exception( 'File not found: ' . $filePath );
+                throw new \Exception( 'Directory not found: ' . $areaPath );
             }
         }
     }
 
     private function registerControllerActions() {
-        foreach ( $this->controllers as $cKey => $cValue ) {
-            $methods = array_values( get_class_methods( $cKey ) );
-            $this->controllers[ $cKey ] = array();
-            foreach ( $methods as $method ) {
-                $this->controllers[ $cKey ][ $method ] = true;
+        foreach ( $this->_areas as $area => $areaControllers ) {
+            foreach ( $areaControllers as $areaController => $areaMethods ) {
+                $methods = array_values( get_class_methods( $areaController ) );
+                foreach ( $methods as $method ) {
+                    $this->_areas[ $area ][ $areaController ][ $method ] = true;
+                }
             }
         }
     }
 
-    private function initController( $controllerName, $customControllerName, array $requestParams ) {
-        if ( isset( $this->controllers[ $controllerName ] ) ) {
+    private function initController( $areaName, $controllerName, $customControllerName, array $requestParams ) {
+        if ( isset( $this->_areas[ $areaName ][ $controllerName ] ) ) {
             $this->_controller = new $controllerName( $controllerName, $customControllerName, $requestParams );
         } else {
-            throw new \Exception( 'File not found: ' . $controllerName );
+            throw new \Exception( 'Controller not found: ' . $controllerName );
         }
     }
 
-    private function validateController( $fullControllerName ) {
-        if ( !isset( $this->controllers[ $fullControllerName ] ) ) {
+    private function validateUriRoute( $areaName, $fullControllerName, $actionName ) {
+        if ( !isset( $this->_areas[ $areaName ] ) ) {
+            throw new \Exception( 'Area: ' . $areaName . ' not found.' );
+        }
+
+        if ( !isset( $this->_areas[ $areaName ][ $fullControllerName ] ) ) {
             throw new \Exception( 'Controller: ' . $fullControllerName . ' not found.' );
         }
-    }
 
-    private function validateControllerAction( $fullControllerName, $actionName ) {
-        if ( !isset( $this->controllers[ $fullControllerName ][ $actionName ] ) ) {
+        if ( !isset( $this->_areas[ $areaName ][ $fullControllerName ][ $actionName ] ) ) {
             throw new \Exception(
                 'Controller: ' . $fullControllerName . '
                     contains no method: ' . $actionName );

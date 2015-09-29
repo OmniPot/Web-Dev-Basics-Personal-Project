@@ -1,6 +1,6 @@
 <?php
 
-namespace Medieval\Application\ViewModels;
+namespace Medieval\Application\TestArea\ViewModels;
 
 class RegisterViewModel {
 
