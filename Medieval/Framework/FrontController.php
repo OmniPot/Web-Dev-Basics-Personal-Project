@@ -37,12 +37,14 @@ class FrontController {
 
             $fullControllerName = $this->getFullControllerName(
                 $this->_uriParseResult->getAreaName(),
-                $this->_uriParseResult->getControllerName() );
+                $this->_uriParseResult->getControllerName()
+            );
 
             $this->validateUriRoute(
                 $this->_uriParseResult->getAreaName(),
                 $fullControllerName,
-                $this->_uriParseResult->getActionName() );
+                $this->_uriParseResult->getActionName()
+            );
 
             $this->initController( $fullControllerName );
 
@@ -83,9 +85,7 @@ class FrontController {
         }
 
         if ( !isset(
-            $this->_uriParseResult->getAreas()
-            [ $this->_uriParseResult->getAreaName() ]
-            [ $controllerName ] )
+            $this->_uriParseResult->getAreas()[ $this->_uriParseResult->getAreaName() ][ $controllerName ] )
         ) {
             throw new \Exception( "Controller not found: $controllerName" );
         }

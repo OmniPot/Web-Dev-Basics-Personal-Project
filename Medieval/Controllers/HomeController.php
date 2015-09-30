@@ -2,6 +2,8 @@
 
 namespace Medieval\Controllers;
 
+use Medieval\Framework\BaseController;
+
 class HomeController extends BaseController {
 
     public function welcome() {

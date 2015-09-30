@@ -18,6 +18,7 @@ class RequestUriResult {
         $this->setActionName( $_actionName );
         $this->setAreas( $areas );
         $this->setRequestParams( $_requestParams );
+
     }
 
     public function getAreaName() {

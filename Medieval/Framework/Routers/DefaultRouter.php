@@ -26,13 +26,14 @@ class DefaultRouter extends BaseRouter {
             $this->setControllerName( $firstParam );
             $this->setActionName( $secondParam );
         } else if ( count( $splitUri ) >= 3 ) {
-            $thirdParam = $splitUri[ 2 ];
+            $thirdParam = array_slice( $splitUri, 2 );
 
             if ( !isset( $this->areas[ $firstParam ] ) ) {
                 $this->setControllerName( $firstParam );
                 $this->setActionName( $secondParam );
                 $this->setRequestParams( $thirdParam );
             } else {
+                $thirdParam = $splitUri[ 2 ];
                 $fourthParam = array_slice( $splitUri, 3 );
 
                 $this->setAreaName( $firstParam );

@@ -1,11 +1,9 @@
 <?php
 
-namespace Medieval\Controllers;
+namespace Medieval\Framework;
 
 use Medieval\Framework\Config\DatabaseConfig;
 use Medieval\Config\BaseRoutingConfig;
-
-use Medieval\Framework\Database;
 
 class BaseController {
 
@@ -33,6 +31,10 @@ class BaseController {
     }
 
     protected function redirect( $location ) {
+        if ( !$location ) {
+            throw new \Exception( 'Invalid location' );
+        }
+
         $urlStart = $this->_areaName ?
             stripos( $_SERVER[ 'REQUEST_URI' ], $this->_areaName ) :
             stripos( $_SERVER[ 'REQUEST_URI' ], $this->_controllerName );

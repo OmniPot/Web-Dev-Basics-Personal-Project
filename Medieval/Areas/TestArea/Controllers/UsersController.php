@@ -2,7 +2,7 @@
 
 namespace Medieval\Areas\TestArea\Controllers;
 
-use Medieval\Controllers\BaseController;
+use Medieval\Framework\BaseController;
 use Medieval\Framework\View;
 
 use Medieval\Areas\TestArea\Repositories\User;
