@@ -1,10 +1,8 @@
 <?php
 
-namespace Medieval\Application\TestArea\Config;
+namespace Medieval\Areas\TestArea\Config;
 
-use Medieval\Application\Config\BaseAreaConfig;
-
-class TestAreaConfig extends BaseAreaConfig {
+class TestAreaConfig {
 
     public $_vendorNamespace = 'Medieval\\';
     public $_applicationNamespace = 'Application\\';

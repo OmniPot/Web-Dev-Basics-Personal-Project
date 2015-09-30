@@ -1,6 +1,6 @@
 <?php
 
-namespace Medieval\Application\TestArea\Models;
+namespace Medieval\Areas\TestArea\Models;
 
 use Medieval\Framework\Database;
 

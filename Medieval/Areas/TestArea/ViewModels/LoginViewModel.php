@@ -1,6 +1,6 @@
 <?php
 
-namespace Medieval\Application\TestArea\ViewModels;
+namespace Medieval\Areas\TestArea\ViewModels;
 
 class LoginViewModel {
 

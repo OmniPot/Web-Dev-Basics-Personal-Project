@@ -26,7 +26,7 @@ class View {
 
     private function initModelOnly( $model ) {
         require_once
-            'Application\\'
+            'Areas\\'
             . self::$areaName . 'Area\\'
             . 'Views'
             . DIRECTORY_SEPARATOR
@@ -38,7 +38,7 @@ class View {
 
     private function initModelView( $view, $model ) {
         require_once
-            'Application\\'
+            'Areas\\'
             . self::$areaName . 'Area\\'
             . 'Views'
             . DIRECTORY_SEPARATOR

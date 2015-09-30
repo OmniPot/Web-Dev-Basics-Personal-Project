@@ -1,6 +1,6 @@
 <?php
 
-namespace Medieval\Application\Config;
+namespace Medieval\Config;
 
 class BaseAreaConfig {
 
