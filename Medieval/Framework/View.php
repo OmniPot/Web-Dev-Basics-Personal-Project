@@ -2,6 +2,8 @@
 
 namespace Medieval\Framework;
 
+use Medieval\Config\AppConfig;
+
 class View {
 
     public static $areaName;
@@ -26,23 +28,25 @@ class View {
 
     private function initModelOnly( $model ) {
         require_once
-            'Areas\\'
-            . self::$areaName . 'Area\\'
-            . 'Views'
-            . DIRECTORY_SEPARATOR
+            AppConfig::AREAS_NAMESPACE
+            . self::$areaName
+            . AppConfig::AREA_SUFFIX
+            . AppConfig::VIEWS_NAMESPACE
             . self::$controllerName
             . DIRECTORY_SEPARATOR
             . self::$actionName
-            . '.php';
+            . AppConfig::PHP_EXTENSION;
     }
 
     private function initModelView( $view, $model ) {
         require_once
-            'Areas\\'
-            . self::$areaName . 'Area\\'
-            . 'Views'
+            AppConfig::AREAS_NAMESPACE
+            . self::$areaName
+            . AppConfig::AREA_SUFFIX
+            . AppConfig::VIEWS_NAMESPACE
+            . self::$controllerName
             . DIRECTORY_SEPARATOR
-            . $view
-            . '.php';
+            . self::$actionName
+            . AppConfig::PHP_EXTENSION;
     }
 }

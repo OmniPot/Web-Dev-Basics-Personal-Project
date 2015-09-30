@@ -2,18 +2,14 @@
 
 namespace Medieval\Config;
 
-abstract class RoutingConfig {
+class BaseRoutingConfig {
 
     protected static $_mappings = array();
 
-    const ROUTING_TYPE = 'custom';
-
-    const DEFAULT_AREA = 'test';
-    const DEFAULT_CONTROLLER = 'home';
-    const DEFAULT_ACTION = 'welcome';
+    const ROUTING_TYPE = 'default';
 
     const UNAUTHORIZED_REDIRECT = 'test/users/login';
-    const AUTHORIZED_REDIRECT = 'test/home/welcome';
+    const AUTHORIZED_REDIRECT = 'main/home/welcome';
 
     public static function getMappings() {
 
@@ -23,7 +19,7 @@ abstract class RoutingConfig {
 
         self::$_mappings[ 'tes' ][ 'ho' ][ 'wel' ] = [ 'area' => 'test', 'controller' => 'home', 'action' => 'welcome' ];
         self::$_mappings[ 'tes' ][ 'ho' ][ 'not' ] = [ 'area' => 'test', 'controller' => 'home', 'action' => 'pageNotFound' ];
-        
+
         return self::$_mappings;
     }
 }

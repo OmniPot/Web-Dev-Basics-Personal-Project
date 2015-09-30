@@ -2,19 +2,19 @@
 
 namespace Medieval\Areas\TestArea\Config;
 
-class TestAreaConfig {
+use Medieval\Config\AppConfig;
 
-    public $_vendorNamespace = 'Medieval\\';
-    public $_applicationNamespace = 'Application\\';
-    public $_frameworkNamespace = 'Framework\\';
-    public $_controllersNamespace = 'Controllers\\';
-    public $_modelsNamespace = 'Models\\';
-    public $_viewModelsNamespace = 'ViewModels\\';
-    public $_viewsNamespace = 'Views\\';
+class TestAreaConfig extends AppConfig {
 
-    public $_controllersFolder = 'Controllers\\*.php';
-    public $_viewFolder = 'Views';
+    const AREA_NAME = '';
 
-    public $_controllersSuffix = 'Controller';
-    public $_phpExtension = '.php';
+    const CONTROLLERS_FOLDER = 'Controllers\\*' . self::PHP_EXTENSION;
+    const REPOSITORIES_FOLDER = 'Repositories\\*' . self::PHP_EXTENSION;
+    const VIEW_FOLDER = 'Views\\*' . self::PHP_EXTENSION;
+    const VIEW_MODELS_FOLDER = 'ViewModels\\*' . self::PHP_EXTENSION;
+    const CONFIG_FOLDER = 'Config\\*' . self::PHP_EXTENSION;
+
+    const AREA_SUFFIX = 'Area\\';
+    const CONTROLLER_SUFFIX = 'Controller\\';
+
 }

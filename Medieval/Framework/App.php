@@ -9,15 +9,12 @@ class App {
     /** @var $_frontController \Medieval\Framework\App */
     private static $_instance = null;
 
-    /** @var $_frontController \Medieval\Framework\FrontController */
-    private $_frontController = null;
-
     private function __construct() {
-        $this->initAutoload();
-        $this->_frontController = FrontController::getInstance();
+
     }
 
     public function start() {
+        $this->initAutoload();
 
         Database::setInstance(
             DatabaseConfig::DB_INSTANCE_NAME,
@@ -28,10 +25,10 @@ class App {
             DatabaseConfig::DB_HOST
         );
 
-        $this->_frontController->dispatch();
+        FrontController::getInstance()->dispatch();
     }
 
-    private function initAutoload() {
+    public function initAutoload() {
         spl_autoload_register( function ( $class ) {
             $classPath = str_replace( [ '\\', '/' ], DIRECTORY_SEPARATOR, $class );
             $classPath = str_replace( 'Medieval\\', '', $class . '.php' );

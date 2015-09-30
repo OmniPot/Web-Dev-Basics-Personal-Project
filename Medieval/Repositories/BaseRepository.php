@@ -1,10 +1,10 @@
 <?php
 
-namespace Medieval\Areas\TestArea\Models;
+namespace Medieval\Repositories;
 
 use Medieval\Framework\Database;
 
-class BaseModel {
+class BaseRepository {
 
     /** @var $database Database */
     protected $databaseInstance;

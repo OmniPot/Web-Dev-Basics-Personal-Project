@@ -1,8 +1,10 @@
 <?php
 
-namespace Medieval\Areas\TestArea\Models;
+namespace Medieval\Areas\TestArea\Repositories;
 
-class User extends BaseModel {
+use Medieval\Repositories\BaseRepository;
+
+class User extends BaseRepository {
 
     public function register( $username, $password ) {
         if ( $this->exists( $username ) ) {
