@@ -4,26 +4,33 @@ namespace Medieval\Config;
 
 class BaseRoutingConfig {
 
-    protected static $_mappings = array();
+    private static $_customMappings = array();
+    private static $_annotationMappings = array();
 
     const ROUTING_TYPE = 'custom';
 
     const UNAUTHORIZED_REDIRECT = 'test/users/login';
     const AUTHORIZED_REDIRECT = 'main/home/welcome';
 
-    const CUSTOM_UNAUTHORIZED_REDIRECT = 'tes/user/in';
-    const CUSTOM_AUTHORIZED_REDIRECT = 'ho/wel';
+    const PARAM_TYPES = [ 'string', 'int', 'mixed' ];
 
-    public static function getMappings() {
+    public static function getCustomMappings() {
 
-        self::$_mappings[ 'tes' ][ 'user' ][ 'in' ] = [ 'area' => 'test', 'controller' => 'users', 'action' => 'login' ];
-        self::$_mappings[ 'tes' ][ 'user' ][ 'in' ] = [ 'area' => 'test', 'controller' => 'users', 'action' => 'login' ];
-        self::$_mappings[ 'tes' ][ 'user' ][ 'out' ] = [ 'area' => 'test', 'controller' => 'users', 'action' => 'logout' ];
-        self::$_mappings[ 'tes' ][ 'user' ][ 'reg' ] = [ 'area' => 'test', 'controller' => 'users', 'action' => 'register' ];
+        self::$_customMappings[ 'tes/user/in' ] = [ 'uri' => 'test/users/login' ];
+        self::$_customMappings[ 'tes/user/out' ] = [ 'uri' => 'test/users/logout' ];
+        self::$_customMappings[ 'tes/user/reg' ] = [ 'uri' => 'test/users/register' ];
 
-        self::$_mappings[ 'tes' ][ 'ho' ][ 'wel' ] = [ 'area' => 'test', 'controller' => 'home', 'action' => 'welcome' ];
-        self::$_mappings[ 'ho' ][ 'wel' ] = [ 'area' => 'main', 'controller' => 'home', 'action' => 'welcome' ];
+        self::$_customMappings[ 'tes/ho/wel' ] = [ 'uri' => 'home/welcome' ];
+        self::$_customMappings[ 'ho/wel' ] = [ 'uri' => 'home/welcome' ];
 
-        return self::$_mappings;
+        return self::$_customMappings;
+    }
+
+    public static function getAnnotationMappings() {
+        return self::$_annotationMappings;
+    }
+
+    public static function setAnnotationMapping( $customRoute, $realRoute, $parameters = [ ] ) {
+        self::$_annotationMappings[ $customRoute ] = [ 'uri' => $realRoute, 'params' => $parameters ];
     }
 }

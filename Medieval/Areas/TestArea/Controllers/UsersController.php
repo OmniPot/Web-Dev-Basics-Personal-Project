@@ -41,7 +41,7 @@ class UsersController extends BaseController {
 
     public function register() {
         if ( $this->isLogged() ) {
-            $this->redirect( $this->alreadyAuthorizedLocation );
+            $this->redirect( $this->unauthorizedLocation );
         }
 
         $viewModel = new RegisterViewModel();

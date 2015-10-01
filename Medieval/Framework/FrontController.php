@@ -5,25 +5,22 @@ namespace Medieval\Framework;
 use Medieval\Config\AppConfig;
 use Medieval\Config\BaseRoutingConfig;
 
-use Medieval\Framework\Routers\CustomRouter;
-use Medieval\Framework\Routers\DefaultRouter;
+use Medieval\Framework\Routers\Router;
 
 class FrontController {
 
     private static $_instance = null;
 
     private $_controller;
+
+    /** @var Routers\Router $_router */
     private $_router;
 
-    /** @var \Medieval\Framework\Routers\RequestUriResult $_uriParseResult */
+    /** @var Routers\RequestUriResult $_uriParseResult */
     private $_uriParseResult;
 
     private function __construct() {
-        if ( BaseRoutingConfig::ROUTING_TYPE == 'default' ) {
-            $this->_router = new DefaultRouter();
-        } else {
-            $this->_router = new CustomRouter();
-        }
+        $this->_router = new Router();
     }
 
     public function dispatch() {
@@ -65,15 +62,15 @@ class FrontController {
     }
 
     protected function validateUriRoute( $areaName, $fullControllerName, $actionName ) {
-        if ( !isset( $this->_uriParseResult->getAreas()[ $areaName ] ) ) {
+        if ( !isset( $this->_uriParseResult->getAppStructure()[ $areaName ] ) ) {
             throw new \Exception( "Area: $areaName not found." );
         }
 
-        if ( !isset( $this->_uriParseResult->getAreas()[ $areaName ][ $fullControllerName ] ) ) {
+        if ( !isset( $this->_uriParseResult->getAppStructure()[ $areaName ][ $fullControllerName ] ) ) {
             throw new \Exception( "Controller: $fullControllerName not found in area: " . $this->_uriParseResult->getAreaName() );
         }
 
-        if ( !isset( $this->_uriParseResult->getAreas()[ $areaName ][ $fullControllerName ][ $actionName ] ) ) {
+        if ( !isset( $this->_uriParseResult->getAppStructure()[ $areaName ][ $fullControllerName ][ $actionName ] ) ) {
             throw new \Exception(
                 "Controller: $fullControllerName contains no method: $actionName" );
         }
@@ -85,7 +82,7 @@ class FrontController {
         }
 
         if ( !isset(
-            $this->_uriParseResult->getAreas()[ $this->_uriParseResult->getAreaName() ][ $controllerName ] )
+            $this->_uriParseResult->getAppStructure()[ $this->_uriParseResult->getAreaName() ][ $controllerName ] )
         ) {
             throw new \Exception( "Controller not found: $controllerName" );
         }

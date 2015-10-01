@@ -3,10 +3,12 @@
 namespace Medieval\Framework\Routers;
 
 use Medieval\Config\AppConfig;
+use Medieval\Config\BaseRoutingConfig;
+use Medieval\Framework\AnnotationsOperator;
 
 abstract class BaseRouter {
 
-    protected $areas = array();
+    protected $appStructure = array();
 
     protected $areaName;
     protected $controllerName;
@@ -18,23 +20,25 @@ abstract class BaseRouter {
         $this->registerAreas( AppConfig::AREAS_NAMESPACE, AppConfig::AREA_SUFFIX );
         $this->registerDefaultAreaControllers();
 
-        foreach ( $this->areas as $key => $value ) {
+        foreach ( $this->appStructure as $key => $value ) {
             $this->registerAreaControllers( $key );
         }
 
         $this->registerControllersActions();
+
+        $this->registerAnnotationRoutes();
 
         $this->setAreaName( AppConfig::DEFAULT_AREA );
         $this->setControllerName( AppConfig::DEFAULT_CONTROLLER );
         $this->setActionName( AppConfig::DEFAULT_ACTION );
     }
 
-    public function getAreas() {
-        return $this->areas;
+    public function getAppStructure() {
+        return $this->appStructure;
     }
 
-    protected function setAreas( $areas ) {
-        $this->areas = $areas;
+    protected function setAppStructure( $appStructure ) {
+        $this->appStructure = $appStructure;
     }
 
     public function getAreaName() {
@@ -69,39 +73,31 @@ abstract class BaseRouter {
         $this->requestParams = $requestParams;
     }
 
-    private function getAreaFolder( $areaName ) {
-        return AppConfig::AREAS_NAMESPACE
-        . $areaName
-        . AppConfig::AREA_SUFFIX
-        . AppConfig::CONTROLLERS_NAMESPACE . '*'
-        . AppConfig::PHP_EXTENSION;
-    }
-
     /**
      * @param $uri string
      * @return RequestUriResult $result
      */
-    public abstract function processRequestUri( $uri );
-
-    protected function registerDefaultAreaControllers() {
-        $this->areas[ ucfirst( AppConfig::DEFAULT_AREA ) ] = [ ];
-        $globParam = AppConfig::CONTROLLERS_NAMESPACE . '*' . AppConfig::PHP_EXTENSION;
-
-        foreach ( glob( $globParam ) as $controllerPath ) {
-            if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
-                $fullPath = AppConfig::VENDOR_NAMESPACE . str_replace( AppConfig::PHP_EXTENSION, '', $controllerPath );
-                $this->areas[ AppConfig::DEFAULT_AREA ][ $fullPath ] = [ ];
-            }
-        }
-    }
+    public abstract function processDefaultRequestUri( $uri );
 
     private function registerAreas( $namespace, $suffix ) {
         foreach ( glob( $namespace . '*' . $suffix ) as $areaPath ) {
             if ( file_exists( $areaPath ) && is_readable( $areaPath ) ) {
                 $areaName = str_replace( [ $namespace, $suffix ], '', $areaPath );
-                $this->areas[ $areaName ] = [ ];
+                $this->appStructure[ $areaName ] = [ ];
             } else {
                 throw new \Exception( 'Directory not found: ' . $areaPath );
+            }
+        }
+    }
+
+    private function registerDefaultAreaControllers() {
+        $this->appStructure[ ucfirst( AppConfig::DEFAULT_AREA ) ] = [ ];
+        $globParam = AppConfig::CONTROLLERS_NAMESPACE . '*' . AppConfig::PHP_EXTENSION;
+
+        foreach ( glob( $globParam ) as $controllerPath ) {
+            if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
+                $fullPath = AppConfig::VENDOR_NAMESPACE . str_replace( AppConfig::PHP_EXTENSION, '', $controllerPath );
+                $this->appStructure[ AppConfig::DEFAULT_AREA ][ $fullPath ] = [ ];
             }
         }
     }
@@ -113,7 +109,7 @@ abstract class BaseRouter {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
                 $fullPath = AppConfig::VENDOR_NAMESPACE .
                     str_replace( AppConfig::PHP_EXTENSION, '', $controllerPath );
-                $this->areas[ $areaName ][ $fullPath ] = [ ];
+                $this->appStructure[ $areaName ][ $fullPath ] = [ ];
             } else {
                 throw new \Exception( 'File not found or is not readable: ' . $controllerPath );
             }
@@ -121,13 +117,60 @@ abstract class BaseRouter {
     }
 
     private function registerControllersActions() {
-        foreach ( $this->areas as $area => $areaControllers ) {
+        foreach ( $this->appStructure as $area => $areaControllers ) {
             foreach ( $areaControllers as $areaController => $areaMethods ) {
                 $methods = array_values( get_class_methods( $areaController ) );
                 foreach ( $methods as $method ) {
-                    $this->areas[ $area ][ $areaController ][ $method ] = true;
+                    $this->appStructure[ $area ][ $areaController ][ $method ] = true;
                 }
             }
         }
+    }
+
+    private function registerAnnotationRoutes() {
+        foreach ( $this->appStructure as $area => $controllers ) {
+            if ( count( array_keys( $controllers ) ) ) {
+                foreach ( array_keys( $controllers ) as $controller ) {
+                    $class = AnnotationsOperator::getReflectionClass( $controller );
+                    $actions = AnnotationsOperator::getClassActions( $class );
+                    $actionDocRoutes = AnnotationsOperator::getActionRoutes( $actions );
+
+                    if ( $actionDocRoutes ) {
+                        foreach ( $actionDocRoutes as $action => $route ) {
+                            $parsedRoute = AnnotationsOperator::parseActionRoute( $route );
+                            if ( $parsedRoute ) {
+                                $route = $this->getValidRequestRoute( $area, $controller, $action );
+
+                                BaseRoutingConfig::setAnnotationMapping(
+                                    $parsedRoute[ 'uri' ], $route, $parsedRoute[ 'params' ] );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private function getValidRequestRoute( $area, $controllerFullPath, $action ) {
+
+        $controllerNameRegex =
+            '/' . AppConfig::CONTROLLERS_NAMESPACE . '\(.*)' . AppConfig::CONTROLLER_SUFFIX . '/';
+
+        preg_match( $controllerNameRegex, $controllerFullPath, $controllerMatches );
+
+        $controller = strtolower( $controllerMatches[ 1 ] );
+        $area = strtolower( $area );
+
+        $route = "$area/$controller/$action";
+
+        return $route;
+    }
+
+    private function getAreaFolder( $areaName ) {
+        return AppConfig::AREAS_NAMESPACE
+        . $areaName
+        . AppConfig::AREA_SUFFIX
+        . AppConfig::CONTROLLERS_NAMESPACE . '*'
+        . AppConfig::PHP_EXTENSION;
     }
 }

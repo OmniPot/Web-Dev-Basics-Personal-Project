@@ -2,6 +2,7 @@
 
 namespace Medieval\Framework;
 
+use Medieval\Config\AppConfig;
 use Medieval\Framework\Config\DatabaseConfig;
 use Medieval\Config\BaseRoutingConfig;
 
@@ -14,8 +15,8 @@ class BaseController {
     protected $_actionName;
     protected $_requestParams;
 
-    protected $unauthorizedLocation = BaseRoutingConfig::UNAUTHORIZED_REDIRECT;
     protected $alreadyAuthorizedLocation = BaseRoutingConfig::AUTHORIZED_REDIRECT;
+    protected $unauthorizedLocation = BaseRoutingConfig::UNAUTHORIZED_REDIRECT;
 
     public function __construct( $areaName = null, $controllerName, $actionName, array $requestParams = [ ] ) {
         $this->_areaName = $areaName;
@@ -35,12 +36,11 @@ class BaseController {
             throw new \Exception( 'Invalid location' );
         }
 
-        $urlStart = $this->_areaName ?
-            stripos( $_SERVER[ 'REQUEST_URI' ], $this->_areaName ) :
-            stripos( $_SERVER[ 'REQUEST_URI' ], $this->_controllerName );
+        $newUriStart = strpos( $_SERVER[ 'REQUEST_URI' ], $_GET[ 'uri' ] );
+        $newUri = str_replace( $_GET[ 'uri' ], $location, $_SERVER[ 'REQUEST_URI' ] );
+        $newUri = str_replace( AppConfig::VENDOR_NAMESPACE, '', $newUri );
 
-        $resultUri = substr( $_SERVER[ 'REQUEST_URI' ], 0, $urlStart ) . $location;
-        header( 'Location: ' . $resultUri );
+        header( 'Location: ' . $newUri );
         exit;
     }
 }
