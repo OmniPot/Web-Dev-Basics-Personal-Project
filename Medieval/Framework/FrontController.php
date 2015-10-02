@@ -2,9 +2,9 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Config\AppConfig;
 use Medieval\Config\RoutingConfig;
 
+use Medieval\Framework\Helpers\DirectoryBuilder;
 use Medieval\Framework\Routers\Router;
 
 class FrontController {
@@ -32,7 +32,7 @@ class FrontController {
         try {
             $this->_uriParseResult = $this->_router->processRequestUri( $_GET[ 'uri' ] );
 
-            $fullControllerName = $this->getFullControllerName(
+            $fullControllerName = DirectoryBuilder::getControllerPath(
                 $this->_uriParseResult->getAreaName(),
                 $this->_uriParseResult->getControllerName()
             );
@@ -93,25 +93,6 @@ class FrontController {
             $this->_uriParseResult->getActionName(),
             $this->_uriParseResult->getRequestParams()
         );
-    }
-
-    private function getFullControllerName( $areaName, $controllerName ) {
-        if ( !$areaName ) {
-            throw new \Exception( 'No area name to get the controller name from' );
-        }
-        if ( !$controllerName ) {
-            throw new \Exception( 'No controller name to process' );
-        }
-
-        $fullControllerName = AppConfig::VENDOR_NAMESPACE;
-
-        if ( $areaName != AppConfig::DEFAULT_AREA ) {
-            $fullControllerName .= AppConfig::AREAS_NAMESPACE . $areaName . AppConfig::AREA_SUFFIX;
-        }
-
-        $fullControllerName .= AppConfig::CONTROLLERS_NAMESPACE . $controllerName . AppConfig::CONTROLLER_SUFFIX;
-
-        return $fullControllerName;
     }
 
     public static function getInstance() {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Medieval\Framework;
+namespace Medieval\Framework\Helpers;
 
 use Medieval\Config\RoutingConfig;
 
@@ -51,6 +51,7 @@ class AnnotationsOperator {
             $resultArray = self::parseRoute( $routeMatches, $resultArray );
         }
 
+        $resultArray[ 'method' ] = 'GET';
         if ( preg_match( $methodRegex, $doc, $methodMatches ) ) {
             $resultArray[ 'method' ] = $methodMatches[ 1 ];
         }

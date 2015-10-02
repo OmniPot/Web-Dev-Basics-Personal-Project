@@ -8,6 +8,8 @@ class RoutingConfig {
 
     const ROUTING_TYPE = 'custom';
 
+    const MAX_REQUEST_PARAMS = 10;
+
     const UNAUTHORIZED_REDIRECT = 'test/users/login';
     const AUTHORIZED_REDIRECT = 'main/home/welcome';
 
@@ -22,11 +24,11 @@ class RoutingConfig {
      */
     public static function getCustomMappings() {
 
-        // Custom route without params
-        // self::$_customMappings[ 'user/login' ] = [ 'uri' => 'test/users/login' ];
-
         // Custom route with params
-        // self::$_customMappings[ 'user/logout/int/string' ] = [ 'uri' => 'test/users/logout', 'params' => [ 'int', 'string' ] ];
+        self::$_customMappings[ 'test/login' ] = [ 'uri' => 'test/users/login', 'params' => [ 'mixed', 'mixed' ] ];
+
+        // Custom route without params
+        self::$_customMappings[ 'test/logout' ] = [ 'uri' => 'test/users/logout' ];
 
         return self::$_customMappings;
     }

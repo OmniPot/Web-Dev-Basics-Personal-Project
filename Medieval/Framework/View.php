@@ -3,15 +3,13 @@
 namespace Medieval\Framework;
 
 use Medieval\Config\AppConfig;
+use Medieval\Framework\Helpers\DirectoryBuilder;
 
 class View {
 
     private static $_areaName;
     private static $_controllerName;
     private static $_actionName;
-
-    const TWO_PARAMS = 2;
-    const SINGLE_PARAMS = 1;
 
     public function __construct( $model = null, $view = null ) {
         if ( $model ) {
@@ -51,7 +49,12 @@ class View {
     }
 
     private function validateModelType( $model, $viewName = null ) {
-        $viewFile = $this->getViewPath( $viewName );
+        $viewFile = DirectoryBuilder::getViewPath(
+            $this->getControllerName(),
+            $this->getActionName(),
+            $this->getAreaName(),
+            $viewName );
+
         $viewContent = file_get_contents( $viewFile );
 
         $typeRegex = '/@var\s*.*\s+(' . AppConfig::VENDOR_NAMESPACE . '\\.*?)\s+\s*.*/';
@@ -69,26 +72,5 @@ class View {
         }
 
         return $viewFile;
-    }
-
-    private function getViewPath( $viewName = null ) {
-        $view = AppConfig::VIEWS_NAMESPACE
-            . $this->getControllerName()
-            . DIRECTORY_SEPARATOR
-            . ( $viewName ? $viewName : $this->getActionName() )
-            . AppConfig::PHP_EXTENSION;
-
-        if ( $this->getAreaName() != AppConfig::DEFAULT_AREA ) {
-            $view = AppConfig::AREAS_NAMESPACE
-                . $this->getAreaName()
-                . AppConfig::AREA_SUFFIX
-                . $view;
-        }
-
-        if ( !is_file( $view ) || !is_readable( $view ) ) {
-            throw new \Exception( 'View not found' );
-        }
-
-        return $view;
     }
 }
