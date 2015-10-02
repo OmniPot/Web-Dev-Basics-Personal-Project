@@ -3,6 +3,9 @@
 namespace Medieval\Controllers;
 
 use Medieval\Framework\BaseController;
+use Medieval\Framework\View;
+
+use Medieval\ViewModels\WelcomeViewModel;
 
 class HomeController extends BaseController {
 
@@ -11,22 +14,7 @@ class HomeController extends BaseController {
      */
     public function welcome() {
 
-        echo 'Home page';
-    }
-
-    /**
-     * @route('home/notFound')
-     */
-    public function pageNotFound() {
-
-        echo 'Page not found';
-    }
-
-    /**
-     * @route('home/bye/mixed')
-     */
-    public function goodbye( $message ) {
-        $message = str_replace( '-', ' ', $message );
-        echo 'Goodbye, ' . $message;
+        $model = new WelcomeViewModel();
+        return new View( $model );
     }
 }

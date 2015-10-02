@@ -2,7 +2,7 @@
 
 namespace Medieval\Areas\TestArea\Repositories;
 
-use Medieval\Repositories\BaseRepository;
+use Medieval\Framework\BaseRepository;
 
 class User extends BaseRepository {
 

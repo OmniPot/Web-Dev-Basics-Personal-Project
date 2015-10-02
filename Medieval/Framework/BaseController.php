@@ -4,7 +4,7 @@ namespace Medieval\Framework;
 
 use Medieval\Config\AppConfig;
 use Medieval\Framework\Config\DatabaseConfig;
-use Medieval\Config\BaseRoutingConfig;
+use Medieval\Config\RoutingConfig;
 
 class BaseController {
 
@@ -15,8 +15,8 @@ class BaseController {
     protected $_actionName;
     protected $_requestParams;
 
-    protected $alreadyAuthorizedLocation = BaseRoutingConfig::AUTHORIZED_REDIRECT;
-    protected $unauthorizedLocation = BaseRoutingConfig::UNAUTHORIZED_REDIRECT;
+    protected $alreadyAuthorizedLocation = RoutingConfig::AUTHORIZED_REDIRECT;
+    protected $unauthorizedLocation = RoutingConfig::UNAUTHORIZED_REDIRECT;
 
     public function __construct( $areaName = null, $controllerName, $actionName, array $requestParams = [ ] ) {
         $this->_areaName = $areaName;

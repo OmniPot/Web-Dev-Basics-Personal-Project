@@ -1,8 +1,6 @@
 <?php
 
-namespace Medieval\Repositories;
-
-use Medieval\Framework\Database;
+namespace Medieval\Framework;
 
 class BaseRepository {
 

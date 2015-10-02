@@ -1,4 +1,4 @@
-<?php /** @var $model Medieval\Areas\TestArea\ViewModels\LoginViewModel */ ?>
+<?php /** @var Medieval\Areas\TestArea\ViewModels\LoginViewModel $model */ ?>
 <?= isset( $model ) ? $model->error : ''; ?>
 
 <h2>Login</h2>

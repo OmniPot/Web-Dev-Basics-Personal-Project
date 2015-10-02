@@ -2,19 +2,18 @@
 
 namespace Medieval\Framework\Routers;
 
-use Medieval\Config\BaseRoutingConfig;
+use Medieval\Config\RoutingConfig;
 
 class Router extends BaseRouter {
 
     public function __construct() {
         parent::__construct();
 
-        $this->_customMappings = BaseRoutingConfig::getCustomMappings();
-        $this->_annotationMappings = BaseRoutingConfig::getAnnotationMappings();
+        $this->_customMappings = RoutingConfig::getCustomMappings();
     }
 
     public function processRequestUri( $uri ) {
-        if ( BaseRoutingConfig::ROUTING_TYPE != 'default' ) {
+        if ( RoutingConfig::ROUTING_TYPE != 'default' ) {
             $result = $this->processCustomRequestUri( $uri );
         } else {
             $result = $this->processDefaultRequestUri( $uri );
@@ -23,7 +22,7 @@ class Router extends BaseRouter {
         return $result;
     }
 
-    public function processDefaultRequestUri( $uri ) {
+    private function processDefaultRequestUri( $uri ) {
         $splitUri = explode( '/', trim( $uri, ' ' ) );
 
         if ( count( $splitUri ) < 2 ) {
@@ -68,29 +67,47 @@ class Router extends BaseRouter {
     }
 
     private function processCustomRequestUri( $uri ) {
-        $exploded = explode( '/', trim( $uri, '/ ' ) );
+        foreach ( $this->appStructure as $areaKeys => $controllers ) {
+            foreach ( $controllers as $controllerKeys => $actions ) {
+                foreach ( $actions as $actionKeys => $actionValues ) {
+                    $customRoute = $actionValues[ 'customRoute' ][ 'uri' ];
+                    if ( strpos( $uri, $customRoute ) === 0 ) {
+                        $realRoute = $actionValues[ 'realRoute' ];
+                        $explodedCustomRoute = explode( '/', $customRoute );
+                        $explodedGivenRoute = explode( '/', rtrim( $uri, '/ ' ) );
 
-        $doubleRoute = implode( '/', array_slice( $exploded, 0, 2 ) );
-        $tripleRoute = implode( '/', array_slice( $exploded, 0, 3 ) );
+                        $paramTypes = $actionValues[ 'customRoute' ][ 'params' ];
 
+                        $requestParams = array_slice(
+                            $explodedGivenRoute,
+                            count( $explodedCustomRoute ),
+                            count( $paramTypes ) );
+
+                        $this->validateRequestParams( $requestParams, $paramTypes );
+                        $uri = $realRoute . '/' . implode( '/', $requestParams );
+                    }
+                }
+            }
+        }
+
+        $explodedCustomRoute = explode( '/', rtrim( $uri, '/ ' ) );
+        $doubleRoute = implode( '/', array_slice( $explodedCustomRoute, 0, 2 ) );
+        $tripleRoute = implode( '/', array_slice( $explodedCustomRoute, 0, 3 ) );
         $mainParamsCount = 2;
-        if ( isset( $this->_annotationMappings[ $doubleRoute ][ 'uri' ] ) ) {
-            $uri = $this->extractRegularUri( $doubleRoute, $this->_annotationMappings, $exploded, $mainParamsCount );
-        } else if ( isset( $this->_annotationMappings[ $tripleRoute ][ 'uri' ] ) ) {
-            $mainParamsCount = 3;
-            $uri = $this->extractRegularUri( $tripleRoute, $this->_annotationMappings, $exploded, $mainParamsCount );
-        } else if ( isset( $this->_customMappings[ $doubleRoute ][ 'uri' ] ) ) {
-            $uri = $this->extractRegularUri( $doubleRoute, $this->_customMappings, $exploded, $mainParamsCount );
+
+        if ( isset( $this->_customMappings[ $doubleRoute ][ 'uri' ] ) ) {
+            $uri = $this->extractRegularUri( $doubleRoute, $this->_customMappings, $explodedCustomRoute, $mainParamsCount );
         } else if ( isset( $this->_customMappings[ $tripleRoute ][ 'uri' ] ) ) {
             $mainParamsCount = 3;
-            $uri = $this->extractRegularUri( $tripleRoute, $this->_customMappings, $exploded, $mainParamsCount );
+            $uri = $this->extractRegularUri( $tripleRoute, $this->_customMappings, $explodedCustomRoute, $mainParamsCount );
         }
 
         return $this->processDefaultRequestUri( $uri );
     }
 
     private function extractRegularUri( $route, array $collection, $uriParts, $mainParamsCount ) {
-        if ( isset ( $collection[ $route ][ 'params' ] ) ) {
+        $requestParams = [ ];
+        if ( isset ( $collection[ $route ][ 'params' ] ) && is_array( $collection[ $route ][ 'params' ] ) ) {
             $requestParams = array_slice( $uriParts, $mainParamsCount );
             $paramTypes = $collection[ $route ][ 'params' ];
             $this->validateRequestParams( $requestParams, $paramTypes );

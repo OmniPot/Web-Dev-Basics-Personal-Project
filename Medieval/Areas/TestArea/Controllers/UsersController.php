@@ -12,6 +12,10 @@ use Medieval\Areas\TestArea\ViewModels\LoginViewModel;
 
 class UsersController extends BaseController {
 
+    /**
+     * @POST
+     * @route('user/login')
+     */
     public function login() {
         if ( $this->isLogged() ) {
             $this->redirect( $this->alreadyAuthorizedLocation );
@@ -31,14 +35,22 @@ class UsersController extends BaseController {
             }
         }
 
-        return new View();
+        return new View( $viewModel );
     }
 
+    /**
+     * @POST
+     * @route('user/logout')
+     */
     public function logout() {
         session_destroy();
         $this->redirect( $this->unauthorizedLocation );
     }
 
+    /**
+     * @POST
+     * @route('user/register')
+     */
     public function register() {
         if ( $this->isLogged() ) {
             $this->redirect( $this->unauthorizedLocation );
@@ -61,7 +73,7 @@ class UsersController extends BaseController {
             }
         }
 
-        return new View();
+        return new View( $viewModel );
     }
 
     private function initLogin( $username, $password ) {

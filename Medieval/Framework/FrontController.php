@@ -3,7 +3,7 @@
 namespace Medieval\Framework;
 
 use Medieval\Config\AppConfig;
-use Medieval\Config\BaseRoutingConfig;
+use Medieval\Config\RoutingConfig;
 
 use Medieval\Framework\Routers\Router;
 
@@ -25,7 +25,7 @@ class FrontController {
 
     public function dispatch() {
         if ( !$_GET || !isset( $_GET[ 'uri' ] ) ) {
-            header( 'Location: ' . BaseRoutingConfig::AUTHORIZED_REDIRECT );
+            header( 'Location: ' . RoutingConfig::AUTHORIZED_REDIRECT );
             exit;
         }
 
@@ -45,9 +45,9 @@ class FrontController {
 
             $this->initController( $fullControllerName );
 
-            View::$areaName = $this->_uriParseResult->getAreaName();
-            View::$controllerName = $this->_uriParseResult->getControllerName();
-            View::$actionName = $this->_uriParseResult->getActionName();
+            View::setAreaName( $this->_uriParseResult->getAreaName() );
+            View::setControllerName( $this->_uriParseResult->getControllerName() );
+            View::setActionName( $this->_uriParseResult->getActionName() );
 
             call_user_func_array(
                 [

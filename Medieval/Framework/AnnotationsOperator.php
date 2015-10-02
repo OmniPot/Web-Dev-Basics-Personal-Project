@@ -2,7 +2,7 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Config\BaseRoutingConfig;
+use Medieval\Config\RoutingConfig;
 
 class AnnotationsOperator {
 
@@ -42,26 +42,37 @@ class AnnotationsOperator {
         return false;
     }
 
-    public static function parseActionRoute( $route ) {
-        $regex = '/@route\(\'(.*)\'\)/';
+    public static function parseActionDoc( $doc ) {
+        $resultArray = [ ];
+        $routeRegex = '/@route\((?:\'|\")(.*)(?:\'|\")\)/';
+        $methodRegex = '/@(GET|POST|PUT|DELETE)\s+/';
 
-        if ( preg_match( $regex, $route, $routeMatches ) ) {
-            $baseRoute = $routeMatches[ 1 ];
-            $exploded = explode( '/', $baseRoute );
-
-            $result = [ 'uri' => '', 'params' => [ ] ];
-            foreach ( $exploded as $key ) {
-                if ( in_array( $key, BaseRoutingConfig::PARAM_TYPES ) ) {
-                    $result[ 'params' ][] = $key;
-                } else {
-                    $result[ 'uri' ] .= "$key/";
-                }
-            }
-
-            $result[ 'uri' ] = rtrim( $result[ 'uri' ], '/' );
-            return $result;
+        if ( preg_match( $routeRegex, $doc, $routeMatches ) ) {
+            $resultArray = self::parseRoute( $routeMatches, $resultArray );
         }
 
-        return false;
+        if ( preg_match( $methodRegex, $doc, $methodMatches ) ) {
+            $resultArray[ 'method' ] = $methodMatches[ 1 ];
+        }
+
+        return $resultArray;
+    }
+
+    private static function parseRoute( $routeMatches, $resultArray ) {
+        $exploded = explode( '/', $routeMatches[ 1 ] );
+
+        $routeResult = [ 'uri' => '', 'params' => [ ] ];
+        foreach ( $exploded as $key ) {
+            if ( in_array( $key, RoutingConfig::PARAM_TYPES ) ) {
+                $routeResult[ 'params' ][] = $key;
+            } else {
+                $routeResult[ 'uri' ] .= "$key/";
+            }
+        }
+
+        $routeResult[ 'uri' ] = rtrim( $routeResult[ 'uri' ], '/' );
+        $resultArray[ 'customRoute' ] = $routeResult;
+
+        return $resultArray;
     }
 }
