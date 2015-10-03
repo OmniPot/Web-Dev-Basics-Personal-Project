@@ -60,7 +60,7 @@ class UserRepository extends BaseRepository {
 
         if ( $result->rowCount() > 0 ) {
             $userRow = $result->fetch();
-            var_dump($userRow);
+
             if ( password_verify( $password, $userRow[ 'password' ] ) ) {
                 return [
                     'id' => $userRow[ 'id' ],

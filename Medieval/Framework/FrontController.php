@@ -12,6 +12,7 @@ class FrontController {
 
     private static $_instance = null;
 
+    /** @var BaseController $_controller */
     private $_controller;
 
     /** @var Routers\Router $_router */

@@ -1,6 +1,6 @@
 <?php /** @var Medieval\ViewModels\WelcomeViewModel $model */ ?>
 <div>
-    <h2>Welcome, <?= $model->getUsername(); ?></h2>
+    <h2>Welcome, <?= htmlspecialchars( $model->getUsername() ); ?></h2>
 
     <a href="/profile/me">Profile</a>
 
