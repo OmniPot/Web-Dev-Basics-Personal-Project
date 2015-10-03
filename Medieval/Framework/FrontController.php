@@ -4,6 +4,7 @@ namespace Medieval\Framework;
 
 use Medieval\Config\RoutingConfig;
 
+use Medieval\Framework\Helpers\BindingsResolver;
 use Medieval\Framework\Helpers\DirectoryBuilder;
 use Medieval\Framework\Routers\Router;
 
@@ -19,8 +20,8 @@ class FrontController {
     /** @var Routers\RequestUriResult $_uriParseResult */
     private $_uriParseResult;
 
-    private function __construct() {
-        $this->_router = new Router();
+    private function __construct( $router ) {
+        $this->_router = $router;
     }
 
     public function dispatch() {
@@ -37,13 +38,10 @@ class FrontController {
                 $this->_uriParseResult->getControllerName()
             );
 
-            $this->validateUriRoute(
-                $this->_uriParseResult->getAreaName(),
-                $fullControllerName,
-                $this->_uriParseResult->getActionName()
-            );
-
             $this->initController( $fullControllerName );
+
+            $this->_uriParseResult = BindingsResolver::resolveModelBinding(
+                $this->_controller, $this->_uriParseResult );
 
             View::setAreaName( $this->_uriParseResult->getAreaName() );
             View::setControllerName( $this->_uriParseResult->getControllerName() );
@@ -58,21 +56,6 @@ class FrontController {
 
         } catch ( \Exception $exception ) {
             echo $exception->getMessage();
-        }
-    }
-
-    protected function validateUriRoute( $areaName, $fullControllerName, $actionName ) {
-        if ( !isset( $this->_uriParseResult->getAppStructure()[ $areaName ] ) ) {
-            throw new \Exception( "Area: $areaName not found." );
-        }
-
-        if ( !isset( $this->_uriParseResult->getAppStructure()[ $areaName ][ $fullControllerName ] ) ) {
-            throw new \Exception( "Controller: $fullControllerName not found in area: " . $this->_uriParseResult->getAreaName() );
-        }
-
-        if ( !isset( $this->_uriParseResult->getAppStructure()[ $areaName ][ $fullControllerName ][ $actionName ] ) ) {
-            throw new \Exception(
-                "Controller: $fullControllerName contains no method: $actionName" );
         }
     }
 
@@ -95,9 +78,13 @@ class FrontController {
         );
     }
 
-    public static function getInstance() {
+    /**
+     * @param Router $router
+     * @return FrontController
+     */
+    public static function getInstance( Router $router ) {
         if ( self::$_instance == null ) {
-            self::$_instance = new self();
+            self::$_instance = new self( $router );
         }
 
         return self::$_instance;

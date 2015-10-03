@@ -4,7 +4,7 @@ namespace Medieval\Areas\TestArea\Repositories;
 
 use Medieval\Framework\BaseRepository;
 
-class User extends BaseRepository {
+class UserRepository extends BaseRepository {
 
     public function register( $username, $password ) {
         if ( $this->exists( $username ) ) {
@@ -39,7 +39,7 @@ class User extends BaseRepository {
     /**
      * @param $username
      * @param $password
-     * @return User
+     * @return UserRepository
      * @throws \Exception
      */
     public function login( $username, $password ) {
@@ -62,7 +62,7 @@ class User extends BaseRepository {
     }
 
     public function getInfo( $userId ) {
-        $query = "SELECT id, username, password FROM users WHERE id = ?";
+        $query = "SELECT id, username, email, password FROM users WHERE id = ?";
         $result = $this->databaseInstance->prepare( $query );
 
         $result->execute( [ $userId ] );

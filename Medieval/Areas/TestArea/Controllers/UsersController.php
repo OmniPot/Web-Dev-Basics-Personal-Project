@@ -2,10 +2,12 @@
 
 namespace Medieval\Areas\TestArea\Controllers;
 
+use Medieval\Areas\TestArea\BindingModels\LoginBindingModel;
+use Medieval\Areas\TestArea\BindingModels\RegisterBindingModel;
 use Medieval\Framework\BaseController;
 use Medieval\Framework\View;
 
-use Medieval\Areas\TestArea\Repositories\User;
+use Medieval\Areas\TestArea\Repositories\UserRepository;
 
 use Medieval\Areas\TestArea\ViewModels\RegisterViewModel;
 use Medieval\Areas\TestArea\ViewModels\LoginViewModel;
@@ -13,71 +15,89 @@ use Medieval\Areas\TestArea\ViewModels\LoginViewModel;
 class UsersController extends BaseController {
 
     /**
-     * @POST
+     * @method GET
      * @route('user/login')
+     * @return View
+     * @throws \Exception
      */
-    public function login() {
+    public function loginPage() {
         if ( $this->isLogged() ) {
             $this->redirect( $this->alreadyAuthorizedLocation );
         }
 
         $viewModel = new LoginViewModel();
-
-        if ( isset( $_POST[ 'username' ], $_POST[ 'password' ] ) ) {
-            try {
-                $username = $_POST[ 'username' ];
-                $password = $_POST[ 'password' ];
-
-                $this->initLogin( $username, $password );
-            } catch ( \Exception $exception ) {
-                $viewModel->error = $exception->getMessage();
-                return new View( $viewModel );
-            }
-        }
-
         return new View( $viewModel );
     }
 
     /**
-     * @POST
-     * @route('user/logout')
+     * @method POST
+     * @route('user/login')
+     * @param LoginBindingModel $model
+     * @return View
      */
-    public function logout() {
-        session_destroy();
-        $this->redirect( $this->unauthorizedLocation );
+    public function login( LoginBindingModel $model ) {
+        if ( $this->isLogged() ) {
+            $this->redirect( $this->alreadyAuthorizedLocation );
+        }
+
+        $username = $model->getUsername();
+        $password = $model->getPassword();
+
+        $this->initLogin( $username, $password );
     }
 
     /**
-     * @POST
+     * @method POST
      * @route('user/register')
+     * @param RegisterBindingModel $model
+     * @throws \Exception
      */
-    public function register() {
+    public function register( RegisterBindingModel $model ) {
+        if ( $this->isLogged() ) {
+            $this->redirect( $this->unauthorizedLocation );
+        }
+
+        $username = $model->getUsername();
+        $password = $model->getPassword();
+        $confirm = $model->getConfirm();
+        $name = $model->getName();
+
+        if ( $password != $confirm ) {
+            throw new \Exception( 'Password and confirmation do not match' );
+        }
+
+        $userModel = new UserRepository( $this->databaseInstance );
+        $userModel->register( $username, $password );
+
+        $this->initLogin( $username, $password );
+    }
+
+    /**
+     * @method GET
+     * @route('user/register')
+     * @return View
+     */
+    public function registerPage() {
         if ( $this->isLogged() ) {
             $this->redirect( $this->unauthorizedLocation );
         }
 
         $viewModel = new RegisterViewModel();
-
-        if ( isset( $_POST[ 'username' ], $_POST[ 'password' ] ) ) {
-            try {
-                $username = $_POST[ 'username' ];
-                $password = $_POST[ 'password' ];
-
-                $userModel = new User( $this->databaseInstance );
-                $userModel->register( $username, $password );
-
-                $this->initLogin( $username, $password );
-            } catch ( \Exception $exception ) {
-                $viewModel->error = $exception->getMessage();
-                return new View( $viewModel );
-            }
-        }
-
         return new View( $viewModel );
     }
 
+    /**
+     * @method POST
+     * @route('user/logout')
+     */
+    public function logout() {
+        session_destroy();
+        $this->redirect( $this->unauthorizedLocation );
+        die;
+    }
+
     private function initLogin( $username, $password ) {
-        $userModel = new User( $this->databaseInstance );
+        $userModel = new UserRepository( $this->databaseInstance );
 
         $userId = $userModel->login( $username, $password );
 

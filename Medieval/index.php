@@ -1,3 +1,5 @@
+<link rel="stylesheet" type="text/css" href="/Contents/styles.css">
+
 <?php
 
 use Medieval\Framework\App;

@@ -3,7 +3,8 @@
 namespace Medieval\Framework\Routers;
 
 use Medieval\Config\AppConfig;
-use Medieval\Framework\Helpers\AnnotationsOperator;
+use Medieval\Framework\Helpers\AnnotationParser;
+use Medieval\Framework\Helpers\DirectoryBuilder;
 
 abstract class BaseRouter {
 
@@ -71,15 +72,22 @@ abstract class BaseRouter {
 
     protected function validateRequestMethod() {
         $requestMethod = $_SERVER[ 'REQUEST_METHOD' ];
+        $routeFound = null;
 
-        foreach ( $this->appStructure as $areaKeys => $controllers ) {
-            foreach ( $controllers as $controllerKeys => $actions ) {
-                foreach ( $actions as $actionKeys => $actionValues ) {
-                    if ( $actionKeys == $this->getActionName() && $actionValues[ 'method' ] != $requestMethod ) {
-                        throw new \Exception( 'Action called with invalid method' );
+        foreach ( $this->appStructure as $areaKey => $controllers ) {
+            foreach ( $controllers as $controllerKey => $actions ) {
+                foreach ( $actions as $actionKey => $actionValues ) {
+                    if ( $actionKey == $this->getActionName() ) {
+                        if ( $requestMethod == $actionValues[ 'method' ] ) {
+                            $routeFound = true;
+                        }
                     }
                 }
             }
+        }
+
+        if ( !$routeFound ) {
+            throw new \Exception( 'No route found that matches the request uri and method' );
         }
     }
 
@@ -93,6 +101,18 @@ abstract class BaseRouter {
                 $this->registerAreaControllers( $areaPath, $areaName );
             } else {
                 throw new \Exception( 'Directory not found: ' . $areaPath );
+            }
+        }
+    }
+
+    private function registerDefaultAreaControllers() {
+        $this->appStructure[ ucfirst( AppConfig::DEFAULT_AREA ) ] = [ ];
+        $globParam = AppConfig::CONTROLLERS_NAMESPACE . '*' . AppConfig::PHP_EXTENSION;
+
+        foreach ( glob( $globParam ) as $controllerPath ) {
+            if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
+                $fullPath = AppConfig::VENDOR_NAMESPACE . str_replace( AppConfig::PHP_EXTENSION, '', $controllerPath );
+                $this->appStructure[ AppConfig::DEFAULT_AREA ][ $fullPath ] = array();
             }
         }
     }
@@ -118,16 +138,17 @@ abstract class BaseRouter {
     }
 
     private function registerControllersActions( $areaName, $fullPath ) {
-        $class = AnnotationsOperator::getReflectionClass( $fullPath );
-        $actions = AnnotationsOperator::getClassActions( $class );
-        $actionDocs = AnnotationsOperator::getActionRoutes( $actions );
+        $class = new \ReflectionClass( $fullPath );
+        $actions = $class->getMethods();
+        $actionDocs = AnnotationParser::getActionRoutes( $actions );
 
         if ( $actionDocs ) {
             foreach ( $actionDocs as $action => $doc ) {
-                $parsedDocsArray = AnnotationsOperator::parseActionDoc( $doc );
+                $parsedDocsArray = AnnotationParser::parseActionDoc( $doc );
 
                 if ( $parsedDocsArray ) {
-                    $realRoute = $this->getValidRequestRoute( $areaName, $fullPath, $action );
+                    $this->appStructure[ $areaName ][ $fullPath ][ $action ] = [ ];
+                    $realRoute = $this->getValidRouteUri( $areaName, $fullPath, $action );
                     $parsedDocsArray[ 'defaultRoute' ] = $realRoute;
                     $this->appStructure[ $areaName ][ $fullPath ][ $action ] = $parsedDocsArray;
                 }
@@ -135,27 +156,23 @@ abstract class BaseRouter {
         }
     }
 
-    private function registerDefaultAreaControllers() {
-        $this->appStructure[ ucfirst( AppConfig::DEFAULT_AREA ) ] = [ ];
-        $globParam = AppConfig::CONTROLLERS_NAMESPACE . '*' . AppConfig::PHP_EXTENSION;
-
-        foreach ( glob( $globParam ) as $controllerPath ) {
-            if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
-                $fullPath = AppConfig::VENDOR_NAMESPACE . str_replace( AppConfig::PHP_EXTENSION, '', $controllerPath );
-                $this->appStructure[ AppConfig::DEFAULT_AREA ][ $fullPath ] = array();
-            }
+    private function getValidRouteUri( $areaName, $fullControllerName, $actionName ) {
+        if ( !isset( $this->getAppStructure()[ $areaName ] ) ) {
+            throw new \Exception( "Area: $areaName not found." );
         }
-    }
 
-    private function getValidRequestRoute( $area, $controllerFullPath, $action ) {
+        if ( !isset( $this->getAppStructure()[ $areaName ][ $fullControllerName ] ) ) {
+            throw new \Exception( "Controller: $fullControllerName not found in area: " . $this->getAreaName() );
+        }
 
-        $controllerNameRegex =
-            '/' . AppConfig::CONTROLLERS_NAMESPACE . '\(.*)' . AppConfig::CONTROLLER_SUFFIX . '/';
+        if ( !isset( $this->getAppStructure()[ $areaName ][ $fullControllerName ][ $actionName ] ) ) {
+            throw new \Exception(
+                "Controller: $fullControllerName contains no method: $actionName" );
+        }
 
-        preg_match( $controllerNameRegex, $controllerFullPath, $controllerMatches );
-        $controller = strtolower( $controllerMatches[ 1 ] );
-        $area = strtolower( $area );
-        $route = "$area/$controller/$action";
+        $controller = DirectoryBuilder::extractControllerName( $fullControllerName );
+        $area = strtolower( $areaName );
+        $route = "$area/$controller/$actionName";
 
         return $route;
     }

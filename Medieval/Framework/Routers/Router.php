@@ -6,10 +6,10 @@ use Medieval\Config\RoutingConfig;
 
 class Router extends BaseRouter {
 
-    public function __construct() {
+    public function __construct( $customRoutes ) {
         parent::__construct();
 
-        $this->_customMappings = RoutingConfig::getCustomMappings();
+        $this->_customMappings = $customRoutes;
     }
 
     public function processRequestUri( $uri ) {
@@ -34,7 +34,7 @@ class Router extends BaseRouter {
 
         if ( count( $splitUri ) == 2 ) {
             if ( isset( $this->appStructure[ $firstParam ] ) ) {
-                throw new \Exception( 'A controller name cannot be the same as an area name' );
+                throw new \Exception( 'No default route for this uri' );
             }
 
             $this->setControllerName( $firstParam );
@@ -75,6 +75,66 @@ class Router extends BaseRouter {
         return $this->processDefaultRequestUri( $uri );
     }
 
+    private function matchAnnotationRoutes( $uri ) {
+        $uri = rtrim( $uri, '/ ' );
+        $uriParts = explode( '/', $uri );
+
+        foreach ( $this->appStructure as $areaKeys => $controllers ) {
+            foreach ( $controllers as $controllerKey => $actions ) {
+                foreach ( $actions as $actionKey => $actionValues ) {
+                    if ( isset( $actionValues[ 'customRoute' ] ) ) {
+                        $customUri = $actionValues[ 'customRoute' ][ 'uri' ];
+                        $customUriParts = explode( '/', rtrim( $customUri, '/ ' ) );
+                        $paramTypes = $actionValues[ 'customRoute' ][ 'params' ];
+                        $method = $actionValues[ 'method' ];
+
+                        if ( array_slice( $uriParts, 0, count( $customUriParts ) ) === $customUriParts ) {
+                            if ( $_SERVER[ 'REQUEST_METHOD' ] == $method ) {
+                                $requestParams = array_slice( $uriParts, count( $customUriParts ), count( $uriParts ) );
+
+                                $this->validateRequestParams( $requestParams, $paramTypes );
+                                $uri = $actionValues[ 'defaultRoute' ];
+
+                                if ( !empty( $requestParams ) ) {
+                                    $uri .= '/' . implode( '/', $requestParams );
+                                }
+
+                                return $uri;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $uri;
+    }
+
+    private function matchConfigRoutes( $uri ) {
+        $trimmedUri = rtrim( $uri, '/ ' );
+        $explodedCustomUri = explode( '/', $trimmedUri );
+
+        for ( $i = 2; $i < RoutingConfig::MAX_REQUEST_PARAMS; $i++ ) {
+            $routeParts = array_slice( $explodedCustomUri, 0, $i );
+            $routeImploded = implode( '/', array_slice( $explodedCustomUri, 0, $i ) );
+
+            if ( isset( $this->_customMappings[ $routeImploded ][ 'uri' ] ) ) {
+                $requestParams = [ ];
+
+                if ( isset ( $this->_customMappings[ $routeImploded ][ 'params' ] ) ) {
+                    $paramTypes = $this->_customMappings[ $routeImploded ][ 'params' ];
+                    $requestParams = array_slice( $explodedCustomUri, count( $routeParts ) );
+                    $this->validateRequestParams( $requestParams, $paramTypes );
+                }
+
+                $uri = $this->_customMappings[ $routeImploded ][ 'uri' ] . '/' . implode( '/', $requestParams );
+                break;
+            }
+        }
+
+        return $uri;
+    }
+
     private function validateRequestParams( $requestParams, $paramTypes ) {
         if ( count( $requestParams ) != count( $paramTypes ) ) {
             throw new \Exception( 'Invalid request parameters count' );
@@ -99,65 +159,5 @@ class Router extends BaseRouter {
                 throw new \Exception( "Invalid parameter type for $requestParams[$i] expected $paramTypes[$i]" );
             };
         }
-    }
-
-    private function matchConfigRoutes( $uri ) {
-        $trimmedUri = rtrim( $uri, '/ ' );
-        $explodedCustomUri = explode( '/', $trimmedUri );
-
-        for ( $i = 2; $i < RoutingConfig::MAX_REQUEST_PARAMS; $i++ ) {
-            $routeParts = array_slice( $explodedCustomUri, 0, $i );
-            $routeImploded = implode( '/', array_slice( $explodedCustomUri, 0, $i ) );
-
-            if ( isset( $this->_customMappings[ $routeImploded ][ 'uri' ] ) ) {
-                $requestParams = [ ];
-
-                if ( isset ( $this->_customMappings[ $routeImploded ][ 'params' ] ) ) {
-                    $paramTypes = $this->_customMappings[ $routeImploded ][ 'params' ];
-                    $requestParams = array_slice( $explodedCustomUri, count( $routeParts ) );
-                    $this->validateRequestParams( $requestParams, $paramTypes );
-                }
-
-                $uri = $this->_customMappings[ $routeImploded ][ 'uri' ] . '/' . implode( '/', $requestParams );
-                break;
-            }
-        }
-        return $uri;
-    }
-
-    private function matchAnnotationRoutes( $uri ) {
-        foreach ( $this->appStructure as $areaKeys => $controllers ) {
-            foreach ( $controllers as $controllerKeys => $actions ) {
-                foreach ( $actions as $actionKeys => $actionValues ) {
-                    $customRoute = $actionValues[ 'customRoute' ][ 'uri' ];
-                    $realRoute = $actionValues[ 'defaultRoute' ];
-
-                    if ( strpos( $uri, $customRoute ) === 0 ) {
-                        $explodedCustomUri = explode( '/', $customRoute );
-                        $explodedRequestRoute = explode( '/', rtrim( $uri, '/ ' ) );
-
-                        $paramTypes = $actionValues[ 'customRoute' ][ 'params' ];
-                        $requestParams = array_slice(
-                            $explodedRequestRoute,
-                            count( $explodedCustomUri ),
-                            count( $paramTypes ) );
-
-                        if ( count( $explodedRequestRoute ) > ( count( $explodedCustomUri ) + count( $paramTypes ) ) ) {
-                            throw new \Exception( 'Invalid request parameters count' );
-                        }
-
-                        $this->validateRequestParams( $requestParams, $paramTypes );
-
-                        $uri = $realRoute;
-
-                        if ( !empty( $requestParams ) ) {
-                            $uri .= '/' . implode( '/', $requestParams );
-                        }
-                    }
-                }
-            }
-        }
-
-        return $uri;
     }
 }

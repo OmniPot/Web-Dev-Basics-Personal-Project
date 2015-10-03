@@ -1,11 +1,11 @@
 <?php
 
-namespace Medieval\ViewModels;
+namespace Medieval\Areas\ProfileArea\ViewModels;
 
-class WelcomeViewModel {
+class ProfileViewModel {
 
-    public $error;
     public $success;
+    public $error;
 
     private $username;
 

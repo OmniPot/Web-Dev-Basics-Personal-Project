@@ -10,6 +10,7 @@ class DirectoryBuilder {
         if ( !$areaName ) {
             throw new \Exception( 'No area name to get the controller name from' );
         }
+
         if ( !$controllerName ) {
             throw new \Exception( 'No controller name to process' );
         }
@@ -22,6 +23,20 @@ class DirectoryBuilder {
         $fullControllerName .= AppConfig::CONTROLLERS_NAMESPACE . $controllerName . AppConfig::CONTROLLER_SUFFIX;
 
         return $fullControllerName;
+    }
+
+    public static function extractControllerName( $controllerFullPath ) {
+        if ( !$controllerFullPath ) {
+            throw new \Exception( 'No full name to extract from' );
+        }
+
+        $controllerNameRegex =
+            '/' . AppConfig::CONTROLLERS_NAMESPACE . '\(.*)' . AppConfig::CONTROLLER_SUFFIX . '/';
+
+        preg_match( $controllerNameRegex, $controllerFullPath, $controllerMatches );
+        $controller = lcfirst( $controllerMatches[ 1 ] );
+
+        return $controller;
     }
 
     public static function getViewPath( $controllerName, $actionName, $areaName = null, $viewName = null ) {

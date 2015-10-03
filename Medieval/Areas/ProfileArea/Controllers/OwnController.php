@@ -1,19 +1,19 @@
 <?php
 
-namespace Medieval\Controllers;
+namespace Medieval\Areas\ProfileArea\Controllers;
 
 use Medieval\Areas\TestArea\Repositories\UserRepository;
 use Medieval\Framework\BaseController;
+use Medieval\Areas\ProfileArea\ViewModels\ProfileViewModel;
 use Medieval\Framework\View;
 
-use Medieval\ViewModels\WelcomeViewModel;
-
-class HomeController extends BaseController {
+class OwnController extends BaseController {
 
     /**
-     * @route('home/welcome')
+     * @method GET
+     * @route('profile/me')
      */
-    public function welcome() {
+    public function myProfile() {
         if ( !$this->isLogged() ) {
             $this->redirect( $this->unauthorizedLocation );
         }
@@ -21,7 +21,7 @@ class HomeController extends BaseController {
         $repo = new UserRepository( $this->databaseInstance );
         $userInfo = $repo->getInfo( $_SESSION[ 'id' ] );
 
-        $viewModel = new WelcomeViewModel();
+        $viewModel = new ProfileViewModel();
         $viewModel->setUsername( $userInfo[ 'username' ] );
 
         return new View( $viewModel );

@@ -2,25 +2,9 @@
 
 namespace Medieval\Framework\Helpers;
 
-use Medieval\Config\RoutingConfig;
+class AnnotationParser {
 
-class AnnotationsOperator {
-
-    /**
-     * @param $controllerPath
-     * @return \ReflectionClass
-     */
-    public static function getReflectionClass( $controllerPath ) {
-        return new \ReflectionClass( $controllerPath );
-    }
-
-    /**
-     * @param \ReflectionClass $class
-     * @return \ReflectionMethod[]
-     */
-    public static function getClassActions( \ReflectionClass $class ) {
-        return $class->getMethods();
-    }
+    private static $paramTypes = [ 'string', 'int', 'mixed' ];
 
     /**
      * @param \ReflectionMethod[] $methods
@@ -45,15 +29,16 @@ class AnnotationsOperator {
     public static function parseActionDoc( $doc ) {
         $resultArray = [ ];
         $routeRegex = '/@route\((?:\'|\")(.*)(?:\'|\")\)/';
-        $methodRegex = '/@(GET|POST|PUT|DELETE)\s+/';
+        $methodRegex = '/@method\s+(POST|GET|PUT|DELETE)\s+/';
 
         if ( preg_match( $routeRegex, $doc, $routeMatches ) ) {
             $resultArray = self::parseRoute( $routeMatches, $resultArray );
         }
 
-        $resultArray[ 'method' ] = 'GET';
         if ( preg_match( $methodRegex, $doc, $methodMatches ) ) {
             $resultArray[ 'method' ] = $methodMatches[ 1 ];
+        } else {
+            $resultArray[ 'method' ] = 'GET';
         }
 
         return $resultArray;
@@ -64,7 +49,7 @@ class AnnotationsOperator {
 
         $routeResult = [ 'uri' => '', 'params' => [ ] ];
         foreach ( $exploded as $key ) {
-            if ( in_array( $key, RoutingConfig::PARAM_TYPES ) ) {
+            if ( in_array( $key, self::$paramTypes ) ) {
                 $routeResult[ 'params' ][] = $key;
             } else {
                 $routeResult[ 'uri' ] .= "$key/";

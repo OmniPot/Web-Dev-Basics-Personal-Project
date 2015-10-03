@@ -10,10 +10,8 @@ class RoutingConfig {
 
     const MAX_REQUEST_PARAMS = 10;
 
-    const UNAUTHORIZED_REDIRECT = 'test/users/login';
-    const AUTHORIZED_REDIRECT = 'main/home/welcome';
-
-    const PARAM_TYPES = [ 'string', 'int', 'mixed' ];
+    const UNAUTHORIZED_REDIRECT = 'user/login';
+    const AUTHORIZED_REDIRECT = 'home/welcome';
 
     /**
      * This method returns custom defined routes that map to existing ones.
