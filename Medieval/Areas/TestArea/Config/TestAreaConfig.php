@@ -2,9 +2,9 @@
 
 namespace Medieval\Areas\TestArea\Config;
 
-use Medieval\Config\AppConfig;
+use Medieval\Framework\Config\FrameworkConfig;
 
-class TestAreaConfig extends AppConfig {
+class TestAreaConfig extends FrameworkConfig {
 
     const AREA_NAME = '';
 

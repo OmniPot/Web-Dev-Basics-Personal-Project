@@ -6,19 +6,21 @@ use Medieval\Framework\BaseRepository;
 
 class UserRepository extends BaseRepository {
 
+    const DEFAULT_USER_ROLE_ID = 1;
+
     public function register( $username, $password ) {
         if ( $this->exists( $username ) ) {
             throw new \Exception( 'Username already taken' );
         }
 
         $registerUserQuery =
-            "INSERT INTO users(username, password)
-            VALUES(?, ?)";
+            "INSERT INTO users(username, password, roleId)  VALUES(?, ?, ?)";
         $result = $this->databaseInstance->prepare( $registerUserQuery );
 
         $result->execute( [
             $username,
-            password_hash( $password, PASSWORD_DEFAULT )
+            password_hash( $password, PASSWORD_DEFAULT ),
+            self::DEFAULT_USER_ROLE_ID
         ] );
 
         if ( $result->rowCount() > 0 ) {
@@ -43,22 +45,33 @@ class UserRepository extends BaseRepository {
      * @throws \Exception
      */
     public function login( $username, $password ) {
-        $query = "SELECT id, password FROM users WHERE username = ?";
+        $query =
+            "SELECT
+                u.id,
+                u.password,
+                r.name as 'role'
+            FROM users u
+            JOIN roles r
+                ON r.id = u.roleId
+            WHERE username = ?";
 
         $result = $this->databaseInstance->prepare( $query );
         $result->execute( [ $username ] );
 
         if ( $result->rowCount() > 0 ) {
             $userRow = $result->fetch();
-
+            var_dump($userRow);
             if ( password_verify( $password, $userRow[ 'password' ] ) ) {
-                return $userRow[ 'id' ];
+                return [
+                    'id' => $userRow[ 'id' ],
+                    'role' => $userRow[ 'role' ]
+                ];
             }
 
             throw new \Exception( 'Wrong password' );
         }
 
-        throw new \Exception( 'Invalid login data' );
+        throw new \Exception( 'Login failed' );
     }
 
     public function getInfo( $userId ) {

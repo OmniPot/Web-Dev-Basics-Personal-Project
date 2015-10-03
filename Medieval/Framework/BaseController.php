@@ -2,9 +2,9 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Config\AppConfig;
+use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Config\DatabaseConfig;
-use Medieval\Config\RoutingConfig;
+use Medieval\Framework\Config\FrameworkRoutingConfig;
 
 class BaseController {
 
@@ -15,8 +15,8 @@ class BaseController {
     protected $_actionName;
     protected $_requestParams;
 
-    protected $alreadyAuthorizedLocation = RoutingConfig::AUTHORIZED_REDIRECT;
-    protected $unauthorizedLocation = RoutingConfig::UNAUTHORIZED_REDIRECT;
+    protected $alreadyAuthorizedLocation = FrameworkRoutingConfig::AUTHORIZED_REDIRECT;
+    protected $unauthorizedLocation = FrameworkRoutingConfig::UNAUTHORIZED_REDIRECT;
 
     public function __construct( $areaName = null, $controllerName, $actionName, array $requestParams = [ ] ) {
         $this->_areaName = $areaName;
@@ -38,7 +38,7 @@ class BaseController {
 
         $newUriStart = strpos( $_SERVER[ 'REQUEST_URI' ], $_GET[ 'uri' ] );
         $newUri = str_replace( $_GET[ 'uri' ], $location, $_SERVER[ 'REQUEST_URI' ] );
-        $newUri = str_replace( AppConfig::VENDOR_NAMESPACE, '', $newUri );
+        $newUri = str_replace( FrameworkConfig::VENDOR_NAMESPACE, '', $newUri );
 
         header( 'Location: ' . $newUri );
         exit;

@@ -2,7 +2,7 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Config\RoutingConfig;
+use Medieval\Framework\Config\FrameworkRoutingConfig;
 use Medieval\Framework\Config\DatabaseConfig;
 use Medieval\Framework\Routers\Router;
 
@@ -27,7 +27,7 @@ class App {
             DatabaseConfig::DB_HOST
         );
 
-        $_router = new Router( RoutingConfig::getCustomMappings() );
+        $_router = new Router( FrameworkRoutingConfig::getCustomMappings() );
         $_frontController = FrontController::getInstance( $_router );
 
         $_frontController->dispatch();

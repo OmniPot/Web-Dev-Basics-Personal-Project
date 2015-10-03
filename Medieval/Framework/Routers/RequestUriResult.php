@@ -52,6 +52,10 @@ class RequestUriResult {
         $this->_requestParams = $requestParams;
     }
 
+    public function addRequestParam( $requestParams ) {
+        $this->_requestParams[] = $requestParams;
+    }
+
     public function getAppStructure() {
         return $this->_appStructure;
     }

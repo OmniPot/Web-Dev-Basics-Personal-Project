@@ -2,13 +2,17 @@
 
 namespace Medieval\Framework\Routers;
 
-use Medieval\Config\AppConfig;
+use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Helpers\AnnotationParser;
 use Medieval\Framework\Helpers\DirectoryBuilder;
 
 abstract class BaseRouter {
 
     protected $appStructure = array();
+    protected $_actionsArray = array();
+
+    protected $_requestMethod;
+    protected $_userRole;
 
     protected $areaName;
     protected $controllerName;
@@ -17,11 +21,14 @@ abstract class BaseRouter {
     protected $requestParams = array();
 
     protected function __construct() {
+        $this->_requestMethod = $_SERVER[ 'REQUEST_METHOD' ];
+        $this->_userRole = isset( $_SESSION[ 'role' ] ) ? $_SESSION[ 'role' ] : 'guest';
+
         $this->registerAppStructure();
 
-        $this->setAreaName( AppConfig::DEFAULT_AREA );
-        $this->setControllerName( AppConfig::DEFAULT_CONTROLLER );
-        $this->setActionName( AppConfig::DEFAULT_ACTION );
+        $this->setAreaName( FrameworkConfig::DEFAULT_AREA );
+        $this->setControllerName( FrameworkConfig::DEFAULT_CONTROLLER );
+        $this->setActionName( FrameworkConfig::DEFAULT_ACTION );
     }
 
     public function getAppStructure() {
@@ -70,32 +77,11 @@ abstract class BaseRouter {
      */
     public abstract function processRequestUri( $uri );
 
-    protected function validateRequestMethod() {
-        $requestMethod = $_SERVER[ 'REQUEST_METHOD' ];
-        $routeFound = null;
-
-        foreach ( $this->appStructure as $areaKey => $controllers ) {
-            foreach ( $controllers as $controllerKey => $actions ) {
-                foreach ( $actions as $actionKey => $actionValues ) {
-                    if ( $actionKey == $this->getActionName() ) {
-                        if ( $requestMethod == $actionValues[ 'method' ] ) {
-                            $routeFound = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        if ( !$routeFound ) {
-            throw new \Exception( 'No route found that matches the request uri and method' );
-        }
-    }
-
     private function registerAppStructure() {
-        foreach ( glob( AppConfig::AREAS_NAMESPACE . '*' . AppConfig::AREA_SUFFIX ) as $areaPath ) {
+        foreach ( glob( FrameworkConfig::AREAS_NAMESPACE . '*' . FrameworkConfig::AREA_SUFFIX ) as $areaPath ) {
             if ( file_exists( $areaPath ) && is_readable( $areaPath ) ) {
-                $areaName = str_replace( [ AppConfig::AREAS_NAMESPACE, AppConfig::AREA_SUFFIX ], '', $areaPath );
-                $this->appStructure[ $areaName ] = array();
+                $areaName = str_replace( [ FrameworkConfig::AREAS_NAMESPACE, FrameworkConfig::AREA_SUFFIX ], '', $areaPath );
+                $this->appStructure[ $areaName ] = [ ];
 
                 $this->registerDefaultAreaControllers();
                 $this->registerAreaControllers( $areaPath, $areaName );
@@ -106,29 +92,29 @@ abstract class BaseRouter {
     }
 
     private function registerDefaultAreaControllers() {
-        $this->appStructure[ ucfirst( AppConfig::DEFAULT_AREA ) ] = [ ];
-        $globParam = AppConfig::CONTROLLERS_NAMESPACE . '*' . AppConfig::PHP_EXTENSION;
+        $this->appStructure[ ucfirst( FrameworkConfig::DEFAULT_AREA ) ] = [ ];
+        $globParam = FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION;
 
         foreach ( glob( $globParam ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
-                $fullPath = AppConfig::VENDOR_NAMESPACE . str_replace( AppConfig::PHP_EXTENSION, '', $controllerPath );
-                $this->appStructure[ AppConfig::DEFAULT_AREA ][ $fullPath ] = array();
+                $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( FrameworkConfig::PHP_EXTENSION, '', $controllerPath );
+                $this->appStructure[ FrameworkConfig::DEFAULT_AREA ][ $fullPath ] = [ ];
             }
         }
     }
 
     private function registerAreaControllers( $areaPath, $areaName ) {
-        foreach ( glob( $areaPath . AppConfig::CONTROLLERS_NAMESPACE . '*' . AppConfig::PHP_EXTENSION ) as $controllerPath ) {
+        foreach ( glob( $areaPath . FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
-                $fullPath = AppConfig::VENDOR_NAMESPACE . str_replace( AppConfig::PHP_EXTENSION, '', $controllerPath );
-                $this->appStructure[ $areaName ][ $fullPath ] = array();
+                $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( FrameworkConfig::PHP_EXTENSION, '', $controllerPath );
+                $this->appStructure[ $areaName ][ $fullPath ] = [ ];
 
                 $this->registerControllersActions( $areaName, $fullPath );
-                $this->registerControllersActions( AppConfig::DEFAULT_AREA,
-                    AppConfig::VENDOR_NAMESPACE
-                    . AppConfig::CONTROLLERS_NAMESPACE
-                    . AppConfig::DEFAULT_CONTROLLER
-                    . AppConfig::CONTROLLER_SUFFIX
+                $this->registerControllersActions( FrameworkConfig::DEFAULT_AREA,
+                    FrameworkConfig::VENDOR_NAMESPACE
+                    . FrameworkConfig::CONTROLLERS_NAMESPACE
+                    . FrameworkConfig::DEFAULT_CONTROLLER
+                    . FrameworkConfig::CONTROLLER_SUFFIX
                 );
 
             } else {
@@ -140,18 +126,27 @@ abstract class BaseRouter {
     private function registerControllersActions( $areaName, $fullPath ) {
         $class = new \ReflectionClass( $fullPath );
         $actions = $class->getMethods();
-        $actionDocs = AnnotationParser::getActionRoutes( $actions );
 
-        if ( $actionDocs ) {
-            foreach ( $actionDocs as $action => $doc ) {
-                $parsedDocsArray = AnnotationParser::parseActionDoc( $doc );
+        foreach ( $actions as $action ) {
+            if ( !$action->isPublic() ) {
+                continue;
+            }
 
+            $this->appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
+            $realRoute = $this->getValidRouteUri( $areaName, $fullPath, $action->name );
+
+            $actionDoc = AnnotationParser::getActionDoc( $action );
+
+            if ( $actionDoc ) {
+                $parsedDocsArray = AnnotationParser::parseActionDoc( $actionDoc );
                 if ( $parsedDocsArray ) {
-                    $this->appStructure[ $areaName ][ $fullPath ][ $action ] = [ ];
-                    $realRoute = $this->getValidRouteUri( $areaName, $fullPath, $action );
                     $parsedDocsArray[ 'defaultRoute' ] = $realRoute;
-                    $this->appStructure[ $areaName ][ $fullPath ][ $action ] = $parsedDocsArray;
+                    $this->appStructure[ $areaName ][ $fullPath ][ $action->name ] = $parsedDocsArray;
+                    $this->_actionsArray[ $action->name ] = $this->appStructure[ $areaName ][ $fullPath ][ $action->name ];
                 }
+            } else {
+                $this->appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
+                $this->_actionsArray[ $action->name ] = $this->appStructure[ $areaName ][ $fullPath ][ $action->name ];
             }
         }
     }

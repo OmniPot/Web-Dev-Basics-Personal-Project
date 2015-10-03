@@ -2,9 +2,13 @@
 
 namespace Medieval\Framework\Routers;
 
-use Medieval\Config\RoutingConfig;
+use Medieval\Framework\Config\FrameworkRoutingConfig;
 
 class Router extends BaseRouter {
+
+    const STRING_VALIDATION_REGEX = '/^[a-zA-Z\_\-]+$/';
+    const INT_VALIDATION_REGEX = '/^[0-9]+$/';
+    const MIXED_VALIDATION_REGEX = '/^[a-zA-Z0-9\_\,\-]+$/';
 
     public function __construct( $customRoutes ) {
         parent::__construct();
@@ -13,7 +17,7 @@ class Router extends BaseRouter {
     }
 
     public function processRequestUri( $uri ) {
-        if ( RoutingConfig::ROUTING_TYPE != 'default' ) {
+        if ( FrameworkRoutingConfig::ROUTING_TYPE != 'default' ) {
             $result = $this->processCustomRequestUri( $uri );
         } else {
             $result = $this->processDefaultRequestUri( $uri );
@@ -24,29 +28,28 @@ class Router extends BaseRouter {
 
     private function processDefaultRequestUri( $uri ) {
         $splitUri = explode( '/', trim( $uri, ' ' ) );
-
         if ( count( $splitUri ) < 2 ) {
-            throw new \Exception( 'Less than 2 params' );
+            throw new \Exception( 'No valid route found', 404 );
         }
 
         $firstParam = ucfirst( $splitUri[ 0 ] );
         $secondParam = $splitUri[ 1 ];
-
         if ( count( $splitUri ) == 2 ) {
             if ( isset( $this->appStructure[ $firstParam ] ) ) {
-                throw new \Exception( 'No default route for this uri' );
+                throw new \Exception( 'No valid route found', 404 );
             }
 
             $this->setControllerName( $firstParam );
             $this->setActionName( $secondParam );
         } else if ( count( $splitUri ) >= 3 ) {
-            $thirdParam = array_values( array_slice( $splitUri, 2 ) );
 
+            $thirdParam = array_values( array_slice( $splitUri, 2 ) );
             if ( !isset( $this->appStructure[ $firstParam ] ) ) {
                 $this->setControllerName( $firstParam );
                 $this->setActionName( $secondParam );
                 $this->setRequestParams( $thirdParam );
             } else {
+
                 $thirdParam = $splitUri[ 2 ];
                 $fourthParam = array_slice( $splitUri, 3 );
 
@@ -56,8 +59,6 @@ class Router extends BaseRouter {
                 $this->setRequestParams( $fourthParam );
             }
         };
-
-        $this->validateRequestMethod();
 
         return new RequestUriResult(
             $this->getAreaName(),
@@ -69,70 +70,70 @@ class Router extends BaseRouter {
     }
 
     private function processCustomRequestUri( $uri ) {
-        $uri = $this->matchAnnotationRoutes( $uri );
-        $uri = $this->matchConfigRoutes( $uri );
+        $uri = $this->matchCustomRoutes( $this->_actionsArray, $uri );
+        $uri = $this->matchCustomRoutes( $this->_customMappings, $uri );
 
         return $this->processDefaultRequestUri( $uri );
     }
 
-    private function matchAnnotationRoutes( $uri ) {
+    private function matchCustomRoutes( $collection, $uri ) {
         $uri = rtrim( $uri, '/ ' );
         $uriParts = explode( '/', $uri );
 
-        foreach ( $this->appStructure as $areaKeys => $controllers ) {
-            foreach ( $controllers as $controllerKey => $actions ) {
-                foreach ( $actions as $actionKey => $actionValues ) {
-                    if ( isset( $actionValues[ 'customRoute' ] ) ) {
-                        $customUri = $actionValues[ 'customRoute' ][ 'uri' ];
-                        $customUriParts = explode( '/', rtrim( $customUri, '/ ' ) );
-                        $paramTypes = $actionValues[ 'customRoute' ][ 'params' ];
-                        $method = $actionValues[ 'method' ];
+        foreach ( $collection as $key => $value ) {
+            if ( empty( $value ) ) {
+                continue;
+            }
 
-                        if ( array_slice( $uriParts, 0, count( $customUriParts ) ) === $customUriParts ) {
-                            if ( $_SERVER[ 'REQUEST_METHOD' ] == $method ) {
-                                $requestParams = array_slice( $uriParts, count( $customUriParts ), count( $uriParts ) );
+            $customUri = $value[ 'route' ][ 'uri' ];
+            $paramTypes = $value[ 'route' ][ 'params' ];
 
-                                $this->validateRequestParams( $requestParams, $paramTypes );
-                                $uri = $actionValues[ 'defaultRoute' ];
+            $customUriParts = explode( '/', rtrim( $customUri, '/ ' ) );
+            $uriMatch = array_slice( $uriParts, 0, count( $customUriParts ) ) == $customUriParts;
 
-                                if ( !empty( $requestParams ) ) {
-                                    $uri .= '/' . implode( '/', $requestParams );
-                                }
+            if ( $uriMatch ) {
 
-                                return $uri;
-                            }
-                        }
-                    }
+                if ( !$this->validateActionRestrictions( $value[ 'method' ], $value[ 'authorize' ], $value[ 'admin' ] ) ) {
+                    continue;
                 }
+
+                $requestParams = array_slice(
+                    $uriParts, count( $customUriParts ), count( $uriParts ) );
+
+                $this->validateRequestParams( $requestParams, $paramTypes );
+                $uri = $value[ 'defaultRoute' ];
+
+                if ( !empty( $requestParams ) ) {
+                    $uri .= '/' . implode( '/', $requestParams );
+                }
+
+                return $uri;
             }
         }
 
         return $uri;
     }
 
-    private function matchConfigRoutes( $uri ) {
-        $trimmedUri = rtrim( $uri, '/ ' );
-        $explodedCustomUri = explode( '/', $trimmedUri );
-
-        for ( $i = 2; $i < RoutingConfig::MAX_REQUEST_PARAMS; $i++ ) {
-            $routeParts = array_slice( $explodedCustomUri, 0, $i );
-            $routeImploded = implode( '/', array_slice( $explodedCustomUri, 0, $i ) );
-
-            if ( isset( $this->_customMappings[ $routeImploded ][ 'uri' ] ) ) {
-                $requestParams = [ ];
-
-                if ( isset ( $this->_customMappings[ $routeImploded ][ 'params' ] ) ) {
-                    $paramTypes = $this->_customMappings[ $routeImploded ][ 'params' ];
-                    $requestParams = array_slice( $explodedCustomUri, count( $routeParts ) );
-                    $this->validateRequestParams( $requestParams, $paramTypes );
-                }
-
-                $uri = $this->_customMappings[ $routeImploded ][ 'uri' ] . '/' . implode( '/', $requestParams );
-                break;
-            }
+    private function validateActionRestrictions( $actionRequestMethod, $requiredUser, $requiredAdmin ) {
+        if ( $this->_requestMethod != $actionRequestMethod ) {
+            return false;
         }
 
-        return $uri;
+        $requiredAuthLevel = 'guest';
+        if ( $requiredUser ) {
+            $requiredAuthLevel = 'user';
+        }
+        if ( $requiredAdmin ) {
+            $requiredAuthLevel = 'admin';
+        }
+
+        if ( ( $requiredAuthLevel == 'admin' && $this->_userRole != 'admin' ) ||
+            ( $requiredAuthLevel == 'user' && ( $this->_userRole != 'admin' && $this->_userRole != 'user' ) )
+        ) {
+            throw new \Exception( 'Unauthorized access' );
+        }
+
+        return true;
     }
 
     private function validateRequestParams( $requestParams, $paramTypes ) {
@@ -145,13 +146,13 @@ class Router extends BaseRouter {
 
             switch ( $paramTypes[ $i ] ) {
                 case 'string' :
-                    $typeMatches = preg_match( '/^[a-zA-Z\_\-]+$/', $requestParams[ $i ] );
+                    $typeMatches = preg_match( self::STRING_VALIDATION_REGEX, $requestParams[ $i ] );
                     break;
                 case 'int' :
-                    $typeMatches = preg_match( '/^[0-9]+$/', $requestParams[ $i ] );
+                    $typeMatches = preg_match( self::INT_VALIDATION_REGEX, $requestParams[ $i ] );
                     break;
                 case 'mixed' :
-                    $typeMatches = preg_match( '/^[a-zA-Z0-9\_\,\-]+$/', $requestParams[ $i ] );
+                    $typeMatches = preg_match( self::MIXED_VALIDATION_REGEX, $requestParams[ $i ] );
                     break;
             }
 

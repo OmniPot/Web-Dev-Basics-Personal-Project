@@ -15,35 +15,25 @@ use Medieval\Areas\TestArea\ViewModels\LoginViewModel;
 class UsersController extends BaseController {
 
     /**
-     * @method GET
-     * @route('user/login')
-     * @return View
-     * @throws \Exception
-     */
-    public function loginPage() {
-        if ( $this->isLogged() ) {
-            $this->redirect( $this->alreadyAuthorizedLocation );
-        }
-
-        $viewModel = new LoginViewModel();
-        return new View( $viewModel );
-    }
-
-    /**
      * @method POST
      * @route('user/login')
      * @param LoginBindingModel $model
      * @return View
      */
     public function login( LoginBindingModel $model ) {
-        if ( $this->isLogged() ) {
-            $this->redirect( $this->alreadyAuthorizedLocation );
-        }
-
         $username = $model->getUsername();
         $password = $model->getPassword();
 
         $this->initLogin( $username, $password );
+    }
+
+    /**
+     * @route('user/login')
+     * @return View
+     */
+    public function loginPage() {
+        $viewModel = new LoginViewModel();
+        return new View( $viewModel );
     }
 
     /**
@@ -53,10 +43,6 @@ class UsersController extends BaseController {
      * @throws \Exception
      */
     public function register( RegisterBindingModel $model ) {
-        if ( $this->isLogged() ) {
-            $this->redirect( $this->unauthorizedLocation );
-        }
-
         $username = $model->getUsername();
         $password = $model->getPassword();
         $confirm = $model->getConfirm();
@@ -73,15 +59,9 @@ class UsersController extends BaseController {
     }
 
     /**
-     * @method GET
      * @route('user/register')
-     * @return View
      */
     public function registerPage() {
-        if ( $this->isLogged() ) {
-            $this->redirect( $this->unauthorizedLocation );
-        }
-
         $viewModel = new RegisterViewModel();
         return new View( $viewModel );
     }
@@ -99,10 +79,11 @@ class UsersController extends BaseController {
     private function initLogin( $username, $password ) {
         $userModel = new UserRepository( $this->databaseInstance );
 
-        $userId = $userModel->login( $username, $password );
+        $userInfo = $userModel->login( $username, $password );
 
         $_SESSION = [ ];
-        $_SESSION[ 'id' ] = $userId;
+        $_SESSION[ 'id' ] = $userInfo[ 'id' ];
+        $_SESSION[ 'role' ] = $userInfo[ 'role' ];
 
         $this->redirect( $this->alreadyAuthorizedLocation );
     }

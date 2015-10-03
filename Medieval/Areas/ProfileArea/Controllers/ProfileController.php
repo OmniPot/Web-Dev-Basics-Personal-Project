@@ -7,17 +7,14 @@ use Medieval\Framework\BaseController;
 use Medieval\Areas\ProfileArea\ViewModels\ProfileViewModel;
 use Medieval\Framework\View;
 
-class OwnController extends BaseController {
+class ProfileController extends BaseController {
 
     /**
+     * @authorize
      * @method GET
      * @route('profile/me')
      */
     public function myProfile() {
-        if ( !$this->isLogged() ) {
-            $this->redirect( $this->unauthorizedLocation );
-        }
-
         $repo = new UserRepository( $this->databaseInstance );
         $userInfo = $repo->getInfo( $_SESSION[ 'id' ] );
 

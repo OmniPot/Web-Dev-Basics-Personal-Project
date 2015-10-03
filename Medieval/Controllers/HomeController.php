@@ -10,9 +10,6 @@ use Medieval\ViewModels\WelcomeViewModel;
 
 class HomeController extends BaseController {
 
-    /**
-     * @route('home/welcome')
-     */
     public function welcome() {
         if ( !$this->isLogged() ) {
             $this->redirect( $this->unauthorizedLocation );

@@ -2,7 +2,7 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Config\AppConfig;
+use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Helpers\DirectoryBuilder;
 
 class View {
@@ -57,7 +57,7 @@ class View {
 
         $viewContent = file_get_contents( $viewFile );
 
-        $typeRegex = '/@var\s*.*\s+(' . AppConfig::VENDOR_NAMESPACE . '\\.*?)\s+\s*.*/';
+        $typeRegex = '/@var\s*.*\s+(' . FrameworkConfig::VENDOR_NAMESPACE . '\\.*?)\s+\s*.*/';
         preg_match( $typeRegex, $viewContent, $matches );
 
         if ( !isset( $matches[ 1 ] ) ) {

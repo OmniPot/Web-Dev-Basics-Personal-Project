@@ -9,11 +9,10 @@ class BindingsResolver {
 
     /**
      * @param BaseController $controller
-     * @param RequestUriResult $uriParseResult
      * @return RequestUriResult
      * @throws \Exception
      */
-    public static function resolveModelBinding( BaseController $controller, RequestUriResult $uriParseResult ) {
+    public static function resolveModelBinding( BaseController $controller, $actionName ) {
         if ( in_array( $_SERVER[ 'REQUEST_METHOD' ], [ 'POST', 'PUT' ] ) ) {
 
             $controllerReflection = new \ReflectionClass( $controller );
@@ -21,37 +20,29 @@ class BindingsResolver {
             $bindingModel = null;
 
             foreach ( $controllerMethods as $method ) {
-
-                if ( $method->name == $uriParseResult->getActionName() ) {
+                if ( $method->name == $actionName ) {
                     $parameters = $method->getParameters();
-
                     foreach ( $parameters as $param ) {
                         $paramClass = $param->getClass();
-
                         if ( $paramClass ) {
                             $paramClassName = $paramClass->getName();
                             $bindingModel = new $paramClassName();
                             $reflectionBindingModel = new \ReflectionClass( $paramClassName );
-
                             foreach ( $reflectionBindingModel->getProperties() as $property ) {
                                 $propertySetter = 'set' . ucfirst( $property->name );
 
                                 if ( !isset( $_POST[ $property->name ] ) || !$_POST[ $property->name ] ) {
-                                    throw new \Exception( 'Invalid post data supplied' );
+                                    throw new \Exception( 'Invalid or no post data supplied' );
                                 } else {
                                     $bindingModel->$propertySetter( $_POST[ $property->name ] );
                                 }
                             }
 
-                            $uriParseResult->setRequestParams( [ $bindingModel ] );
-
-                            return $uriParseResult;
+                            return $bindingModel;
                         }
                     }
                 }
             }
         }
-
-        return $uriParseResult;
     }
 }

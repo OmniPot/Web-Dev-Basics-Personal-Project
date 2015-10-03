@@ -2,7 +2,7 @@
 
 namespace Medieval\Framework\Helpers;
 
-use Medieval\Config\AppConfig;
+use Medieval\Framework\Config\FrameworkConfig;
 
 class DirectoryBuilder {
 
@@ -15,12 +15,12 @@ class DirectoryBuilder {
             throw new \Exception( 'No controller name to process' );
         }
 
-        $fullControllerName = AppConfig::VENDOR_NAMESPACE;
-        if ( $areaName != AppConfig::DEFAULT_AREA ) {
-            $fullControllerName .= AppConfig::AREAS_NAMESPACE . $areaName . AppConfig::AREA_SUFFIX;
+        $fullControllerName = FrameworkConfig::VENDOR_NAMESPACE;
+        if ( $areaName != FrameworkConfig::DEFAULT_AREA ) {
+            $fullControllerName .= FrameworkConfig::AREAS_NAMESPACE . $areaName . FrameworkConfig::AREA_SUFFIX;
         }
 
-        $fullControllerName .= AppConfig::CONTROLLERS_NAMESPACE . $controllerName . AppConfig::CONTROLLER_SUFFIX;
+        $fullControllerName .= FrameworkConfig::CONTROLLERS_NAMESPACE . $controllerName . FrameworkConfig::CONTROLLER_SUFFIX;
 
         return $fullControllerName;
     }
@@ -31,7 +31,7 @@ class DirectoryBuilder {
         }
 
         $controllerNameRegex =
-            '/' . AppConfig::CONTROLLERS_NAMESPACE . '\(.*)' . AppConfig::CONTROLLER_SUFFIX . '/';
+            '/' . FrameworkConfig::CONTROLLERS_NAMESPACE . '\(.*)' . FrameworkConfig::CONTROLLER_SUFFIX . '/';
 
         preg_match( $controllerNameRegex, $controllerFullPath, $controllerMatches );
         $controller = lcfirst( $controllerMatches[ 1 ] );
@@ -40,16 +40,16 @@ class DirectoryBuilder {
     }
 
     public static function getViewPath( $controllerName, $actionName, $areaName = null, $viewName = null ) {
-        $view = AppConfig::VIEWS_NAMESPACE
+        $view = FrameworkConfig::VIEWS_NAMESPACE
             . $controllerName
             . DIRECTORY_SEPARATOR
             . ( $viewName ? $viewName : $actionName )
-            . AppConfig::PHP_EXTENSION;
+            . FrameworkConfig::PHP_EXTENSION;
 
-        if ( $areaName != AppConfig::DEFAULT_AREA ) {
-            $view = AppConfig::AREAS_NAMESPACE
+        if ( $areaName != FrameworkConfig::DEFAULT_AREA ) {
+            $view = FrameworkConfig::AREAS_NAMESPACE
                 . $areaName
-                . AppConfig::AREA_SUFFIX
+                . FrameworkConfig::AREA_SUFFIX
                 . $view;
         }
 

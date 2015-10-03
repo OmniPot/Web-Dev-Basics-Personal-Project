@@ -2,7 +2,7 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Config\RoutingConfig;
+use Medieval\Framework\Config\FrameworkRoutingConfig;
 
 use Medieval\Framework\Helpers\BindingsResolver;
 use Medieval\Framework\Helpers\DirectoryBuilder;
@@ -26,7 +26,7 @@ class FrontController {
 
     public function dispatch() {
         if ( !$_GET || !isset( $_GET[ 'uri' ] ) ) {
-            header( 'Location: ' . RoutingConfig::AUTHORIZED_REDIRECT );
+            header( 'Location: ' . FrameworkRoutingConfig::AUTHORIZED_REDIRECT );
             exit;
         }
 
@@ -40,8 +40,9 @@ class FrontController {
 
             $this->initController( $fullControllerName );
 
-            $this->_uriParseResult = BindingsResolver::resolveModelBinding(
-                $this->_controller, $this->_uriParseResult );
+            $bindingResult = BindingsResolver::resolveModelBinding(
+                $this->_controller, $this->_uriParseResult->getActionName() );
+            $this->_uriParseResult->addRequestParam( $bindingResult );
 
             View::setAreaName( $this->_uriParseResult->getAreaName() );
             View::setControllerName( $this->_uriParseResult->getControllerName() );
@@ -60,16 +61,13 @@ class FrontController {
     }
 
     private function initController( $controllerName ) {
-        if ( !$controllerName ) {
-            throw new \Exception( 'Controller name cannot be null' );
-        }
-
-        if ( !isset(
-            $this->_uriParseResult->getAppStructure()[ $this->_uriParseResult->getAreaName() ][ $controllerName ] )
+        if ( !isset( $this->_uriParseResult->getAppStructure()
+            [ $this->_uriParseResult->getAreaName() ]
+            [ $controllerName ]
+            [ $this->_uriParseResult->getActionName() ] )
         ) {
-            throw new \Exception( "Controller not found: $controllerName" );
+            throw new \Exception( 'Invalid controller or method name.' );
         }
-
         $this->_controller = new $controllerName(
             $this->_uriParseResult->getAreaName(),
             $this->_uriParseResult->getControllerName(),
