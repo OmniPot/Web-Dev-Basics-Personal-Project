@@ -2,7 +2,7 @@
 
 namespace Medieval\Framework\Routers;
 
-use Medieval\Framework\Config\FrameworkRoutingConfig;
+use Medieval\Config\RoutingConfig;
 
 class Router extends BaseRouter {
 
@@ -10,13 +10,36 @@ class Router extends BaseRouter {
     const INT_VALIDATION_REGEX = '/^[0-9]+$/';
     const MIXED_VALIDATION_REGEX = '/^[a-zA-Z0-9\_\,\-]+$/';
 
-    public function __construct( $customRoutes ) {
+    private $_appStructure;
+    private $_actionsArray;
+
+    public function __construct( $_appStructure, $_actionsArray ) {
         parent::__construct();
-        $this->_customMappings = $customRoutes;
+
+        $this->setAppStructure( $_appStructure );
+        $this->setActionsArray( $_actionsArray );
+
+        $this->_customMappings = RoutingConfig::getCustomMappings();
+    }
+
+    public function getAppStructure() {
+        return $this->_appStructure;
+    }
+
+    public function setAppStructure( $appStructure ) {
+        $this->_appStructure = $appStructure;
+    }
+
+    public function getActionsArray() {
+        return $this->_actionsArray;
+    }
+
+    public function setActionsArray( $actionsArray ) {
+        $this->_actionsArray = $actionsArray;
     }
 
     public function processRequestUri( $uri ) {
-        if ( FrameworkRoutingConfig::ROUTING_TYPE != 'default' ) {
+        if ( RoutingConfig::ROUTING_TYPE != 'default' ) {
             $result = $this->processCustomRequestUri( $uri );
         } else {
             $result = $this->processDefaultRequestUri( $uri );

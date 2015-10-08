@@ -37,7 +37,9 @@ class FrontController {
             $this->initController();
 
             $bindingResult = BindingHelper::resolveModelBinding(
-                $this->_controller, $this->_uriParsedResult->getActionName() );
+                $this->_controller,
+                $this->_uriParsedResult->getActionName()
+            );
 
             $this->_uriParsedResult->addRequestParam( $bindingResult );
 
