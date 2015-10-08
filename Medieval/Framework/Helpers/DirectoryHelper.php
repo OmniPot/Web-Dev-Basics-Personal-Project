@@ -4,7 +4,7 @@ namespace Medieval\Framework\Helpers;
 
 use Medieval\Framework\Config\FrameworkConfig;
 
-class DirectoryBuilder {
+class DirectoryHelper {
 
     public static function getControllerPath( $areaName, $controllerName ) {
         if ( !$areaName ) {
@@ -25,7 +25,7 @@ class DirectoryBuilder {
         return $fullControllerName;
     }
 
-    public static function extractControllerName( $controllerFullPath ) {
+    public static function getControllerName( $controllerFullPath ) {
         if ( !$controllerFullPath ) {
             throw new \Exception( 'No full name to extract from' );
         }

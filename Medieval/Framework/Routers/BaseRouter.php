@@ -5,8 +5,8 @@ namespace Medieval\Framework\Routers;
 use Medieval\Config\AppConfig;
 use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Helpers\AnnotationParser;
-use Medieval\Framework\Helpers\DirectoryBuilder;
-use Medieval\Framework\Helpers\FileOperator;
+use Medieval\Framework\Helpers\DirectoryHelper;
+use Medieval\Framework\Helpers\FileHelper;
 
 abstract class BaseRouter {
 
@@ -24,8 +24,8 @@ abstract class BaseRouter {
 
     protected function __construct() {
         $this->_requestMethod = $_SERVER[ 'REQUEST_METHOD' ];
-
         $this->_userRole = 'guest';
+
         if ( isset( $_SESSION[ 'role' ] ) ) {
             $this->_userRole = $_SESSION[ 'role' ];
         }
@@ -92,39 +92,35 @@ abstract class BaseRouter {
     public abstract function processRequestUri( $uri );
 
     private function setupAppStructureConfig() {
-        if ( file_exists( FrameworkConfig::APP_STRUCTURE_NAME ) &&
-            is_readable( FrameworkConfig::APP_STRUCTURE_NAME )
+        if ( !file_exists( FrameworkConfig::APP_STRUCTURE_NAME ) ||
+            !is_readable( FrameworkConfig::APP_STRUCTURE_NAME )
         ) {
+            $this->writeAppStructureConfig();
+        } else {
             include_once FrameworkConfig::APP_STRUCTURE_NAME;
 
-            if ( !empty( $expires ) ) {
-                $now = new \DateTime( 'now', new \DateTimeZone( AppConfig::TIME_ZONE ) );
-                $expires = new \DateTime( $expires, new \DateTimeZone( AppConfig::TIME_ZONE ) );
-
-                if ( $now->getTimestamp() > $expires->getTimestamp() ) {
-                    $this->removeAppStructureConfig();
-                    $this->writeAppStructureConfig();
-                }
+            if ( empty( $expires ) && empty( $appStructure ) && empty( $actionsStructure ) ) {
+                throw new \Exception( 'App structure config contains invalid information' );
             }
 
-            if ( !empty( $appStructure ) && !empty( $actionsStructure ) ) {
-                $this->setAppStructure( $appStructure );
-                $this->setActionsArray( $actionsStructure );
+            $now = new \DateTime( 'now', new \DateTimeZone( AppConfig::TIME_ZONE ) );
+            $expires = new \DateTime( $expires, new \DateTimeZone( AppConfig::TIME_ZONE ) );
+
+            if ( $now->getTimestamp() > $expires->getTimestamp() ) {
+                unlink( FrameworkConfig::APP_STRUCTURE_NAME );
+                $this->writeAppStructureConfig();
             }
-        } else {
-            $this->writeAppStructureConfig();
+
+            $this->setAppStructure( $appStructure );
+            $this->setActionsArray( $actionsStructure );
         }
     }
 
     private function writeAppStructureConfig() {
         $this->registerAppStructure();
 
-        $content = FileOperator::writeFile( $this->_appStructure, $this->_actionsArray );
+        $content = FileHelper::writeFile( $this->_appStructure, $this->_actionsArray );
         file_put_contents( FrameworkConfig::APP_STRUCTURE_NAME, $content );
-    }
-
-    private function removeAppStructureConfig() {
-        unlink( FrameworkConfig::APP_STRUCTURE_NAME );
     }
 
     private function registerAppStructure() {
@@ -183,7 +179,7 @@ abstract class BaseRouter {
             }
 
             $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
-            $realRoute = $this->getValidRouteUri( $areaName, $fullPath, $action->name );
+            $realRoute = $this->validateRouteUri( $areaName, $fullPath, $action->name );
 
             $actionDoc = AnnotationParser::getActionDoc( $action );
 
@@ -201,7 +197,7 @@ abstract class BaseRouter {
         }
     }
 
-    private function getValidRouteUri( $areaName, $fullControllerName, $actionName ) {
+    private function validateRouteUri( $areaName, $fullControllerName, $actionName ) {
         if ( !isset( $this->getAppStructure()[ $areaName ] ) ) {
             throw new \Exception( "Area: $areaName not found." );
         }
@@ -215,7 +211,7 @@ abstract class BaseRouter {
                 "Controller: $fullControllerName contains no method: $actionName" );
         }
 
-        $controller = DirectoryBuilder::extractControllerName( $fullControllerName );
+        $controller = DirectoryHelper::getControllerName( $fullControllerName );
         $area = strtolower( $areaName );
         $route = "$area/$controller/$actionName";
 

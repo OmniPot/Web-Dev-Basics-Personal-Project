@@ -5,12 +5,16 @@ namespace Medieval\Config;
 class AppConfig {
 
     const TIME_ZONE = 'Europe/Sofia';
+    const APP_STRUCTURE_EXPIRES = 'expires';
+    const APP_STRUCTURE = 'appStructure';
+    const APP_ACTION_STRUCTURE = 'actionsStructure';
 
     const DEFAULT_AREA = 'Main';
-    const AREA_SUFFIX = 'Area';
     const DEFAULT_CONTROLLER = 'Home';
-    const CONTROLLER_SUFFIX = 'Controller';
     const DEFAULT_ACTION = 'welcome';
+
+    const AREA_SUFFIX = 'Area';
+    const CONTROLLER_SUFFIX = 'Controller';
 
     const VENDOR_NAMESPACE = 'Medieval';
     const CONTROLLERS_NAMESPACE = 'Controllers';

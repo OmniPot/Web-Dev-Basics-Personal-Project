@@ -5,10 +5,11 @@ namespace Medieval\Framework\Helpers;
 use Medieval\Framework\BaseController;
 use Medieval\Framework\Routers\RequestUriResult;
 
-class BindingsResolver {
+class BindingHelper {
 
     /**
      * @param BaseController $controller
+     * @param $actionName
      * @return RequestUriResult
      * @throws \Exception
      */

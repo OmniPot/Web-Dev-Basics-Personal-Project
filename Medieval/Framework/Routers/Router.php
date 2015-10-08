@@ -34,7 +34,7 @@ class Router extends BaseRouter {
         $firstParam = ucfirst( $splitUri[ 0 ] );
         $secondParam = $splitUri[ 1 ];
         if ( count( $splitUri ) == 2 ) {
-            if ( isset( $this->_appStructure[ $firstParam ] ) ) {
+            if ( isset( $this->getAppStructure()[ $firstParam ] ) ) {
                 throw new \Exception( 'No valid route found', 404 );
             }
 
@@ -43,7 +43,7 @@ class Router extends BaseRouter {
         } else if ( count( $splitUri ) >= 3 ) {
 
             $thirdParam = array_values( array_slice( $splitUri, 2 ) );
-            if ( !isset( $this->_appStructure[ $firstParam ] ) ) {
+            if ( !isset( $this->getAppStructure()[ $firstParam ] ) ) {
                 $this->setControllerName( $firstParam );
                 $this->setActionName( $secondParam );
                 $this->setRequestParams( $thirdParam );
@@ -69,7 +69,7 @@ class Router extends BaseRouter {
     }
 
     private function processCustomRequestUri( $uri ) {
-        $uri = $this->matchCustomRoutes( $this->_actionsArray, $uri );
+        $uri = $this->matchCustomRoutes( $this->getActionsArray(), $uri );
         $uri = $this->matchCustomRoutes( $this->_customMappings, $uri );
 
         return $this->processDefaultRequestUri( $uri );

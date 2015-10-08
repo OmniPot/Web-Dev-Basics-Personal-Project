@@ -4,8 +4,8 @@ namespace Medieval\Framework;
 
 use Medieval\Framework\Config\FrameworkRoutingConfig;
 
-use Medieval\Framework\Helpers\BindingsResolver;
-use Medieval\Framework\Helpers\DirectoryBuilder;
+use Medieval\Framework\Helpers\BindingHelper;
+use Medieval\Framework\Helpers\DirectoryHelper;
 use Medieval\Framework\Routers\Router;
 
 class FrontController {
@@ -34,14 +34,9 @@ class FrontController {
         try {
             $this->_uriParsedResult = $this->_router->processRequestUri( $_GET[ 'uri' ] );
 
-            $fullControllerName = DirectoryBuilder::getControllerPath(
-                $this->_uriParsedResult->getAreaName(),
-                $this->_uriParsedResult->getControllerName()
-            );
+            $this->initController();
 
-            $this->initController( $fullControllerName );
-
-            $bindingResult = BindingsResolver::resolveModelBinding(
+            $bindingResult = BindingHelper::resolveModelBinding(
                 $this->_controller, $this->_uriParsedResult->getActionName() );
 
             $this->_uriParsedResult->addRequestParam( $bindingResult );
@@ -62,15 +57,20 @@ class FrontController {
         }
     }
 
-    private function initController( $controllerName ) {
+    private function initController() {
+        $fullControllerName = DirectoryHelper::getControllerPath(
+            $this->_uriParsedResult->getAreaName(),
+            $this->_uriParsedResult->getControllerName()
+        );
+
         if ( !isset( $this->_uriParsedResult->getAppStructure()
             [ $this->_uriParsedResult->getAreaName() ]
-            [ $controllerName ]
+            [ $fullControllerName ]
             [ $this->_uriParsedResult->getActionName() ] )
         ) {
             throw new \Exception( 'Invalid controller or method name.' );
         }
-        $this->_controller = new $controllerName(
+        $this->_controller = new $fullControllerName(
             $this->_uriParsedResult->getAreaName(),
             $this->_uriParsedResult->getControllerName(),
             $this->_uriParsedResult->getActionName(),

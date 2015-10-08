@@ -7,23 +7,22 @@ use DateTime;
 use Medieval\Config\AppConfig;
 use Medieval\Framework\Config\FrameworkConfig;
 
-class FileOperator {
+class FileHelper {
 
     private static $_builder = null;
-    private static $_indent = 4;
 
     public static function writeFile( $appContents, $actionContents ) {
         if ( !strpos( self::$_builder, '<?php' ) || !self::$_builder ) {
             self::$_builder = "<?php";
         }
 
-        self::appendVariable( 'expires' );
+        self::appendVariable( AppConfig::APP_STRUCTURE_EXPIRES );
         self::appendExpirationDate();
 
-        self::appendVariable( 'appStructure' );
+        self::appendVariable( AppConfig::APP_STRUCTURE );
         self::appendContents( $appContents, true );
 
-        self::appendVariable( 'actionsStructure' );
+        self::appendVariable( AppConfig::APP_ACTION_STRUCTURE );
         self::appendContents( $actionContents, true );
 
         return self::$_builder;
@@ -33,16 +32,14 @@ class FileOperator {
         $endLine = $final ? ';' : ',';
 
         if ( empty( $array ) ) {
-            self::$_builder .= "[ ]" . $endLine . "\n";
-            self::$_indent -= 4;
+            self::$_builder .= "[ ]" . $endLine;
         } else {
-            self::$_builder .= "[\n";
+            self::$_builder .= "[";
 
             foreach ( $array as $key => $value ) {
                 self::appendKey( $key );
 
                 if ( is_array( $value ) ) {
-                    self::$_indent += 4;
 
                     if ( end( $array ) == $key ) {
                         self::appendContents( $value, true );
@@ -54,13 +51,12 @@ class FileOperator {
                 }
             }
 
-            self::$_indent -= 4;
-            self::$_builder .= "\n" . str_repeat( ' ', self::$_indent ) . "]$endLine\n";
+            self::$_builder .= "]$endLine";
         }
     }
 
     private function appendExpirationDate() {
-        $expirationTime = new DateTime( 'now', new \DateTimeZone( 'Europe/Sofia' ) );
+        $expirationTime = new DateTime( 'now', new \DateTimeZone( AppConfig::TIME_ZONE ) );
         $formatted = $expirationTime
             ->add( new DateInterval( FrameworkConfig::APP_STRUCTURE_CONFIG_RENEW_TIME ) )
             ->format( 'Y-m-d H:i:s' );
@@ -69,15 +65,14 @@ class FileOperator {
     }
 
     private function appendVariable( $name ) {
-        self::$_builder .= "\n\n$$name = ";
-        self::$_indent = 4;
+        self::$_builder .= "\n$$name=";
     }
 
     private function appendKey( $key ) {
-        self::$_builder .= str_repeat( ' ', self::$_indent ) . '\'' . $key . '\' => ';
+        self::$_builder .= '\'' . $key . '\'=>';
     }
 
     private function appendValue( $value ) {
-        self::$_builder .= '\'' . $value . '\',' . "\n";
+        self::$_builder .= '\'' . $value . '\',';
     }
 }

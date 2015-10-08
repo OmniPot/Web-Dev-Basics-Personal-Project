@@ -3,7 +3,7 @@
 namespace Medieval\Framework;
 
 use Medieval\Framework\Config\FrameworkConfig;
-use Medieval\Framework\Helpers\DirectoryBuilder;
+use Medieval\Framework\Helpers\DirectoryHelper;
 
 class View {
 
@@ -49,7 +49,7 @@ class View {
     }
 
     private function validateModelType( $model, $viewName = null ) {
-        $viewFile = DirectoryBuilder::getViewPath(
+        $viewFile = DirectoryHelper::getViewPath(
             $this->getControllerName(),
             $this->getActionName(),
             $this->getAreaName(),

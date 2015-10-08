@@ -8,8 +8,6 @@ class FrameworkRoutingConfig {
 
     const ROUTING_TYPE = RoutingConfig::ROUTING_TYPE;
 
-    const MAX_REQUEST_PARAMS = 10;
-
     const UNAUTHORIZED_REDIRECT = RoutingConfig::UNAUTHORIZED_REDIRECT;
     const AUTHORIZED_REDIRECT = RoutingConfig::AUTHORIZED_REDIRECT;
 
