@@ -4,6 +4,8 @@ namespace Medieval\Config;
 
 class AppConfig {
 
+    const TIME_ZONE = 'Europe/Sofia';
+
     const DEFAULT_AREA = 'Main';
     const AREA_SUFFIX = 'Area';
     const DEFAULT_CONTROLLER = 'Home';

@@ -18,8 +18,8 @@ class FrontController {
     /** @var Routers\Router $_router */
     private $_router;
 
-    /** @var Routers\RequestUriResult $_uriParseResult */
-    private $_uriParseResult;
+    /** @var Routers\RequestUriResult $_uriParsedResult */
+    private $_uriParsedResult;
 
     private function __construct( $router ) {
         $this->_router = $router;
@@ -32,29 +32,30 @@ class FrontController {
         }
 
         try {
-            $this->_uriParseResult = $this->_router->processRequestUri( $_GET[ 'uri' ] );
+            $this->_uriParsedResult = $this->_router->processRequestUri( $_GET[ 'uri' ] );
 
             $fullControllerName = DirectoryBuilder::getControllerPath(
-                $this->_uriParseResult->getAreaName(),
-                $this->_uriParseResult->getControllerName()
+                $this->_uriParsedResult->getAreaName(),
+                $this->_uriParsedResult->getControllerName()
             );
 
             $this->initController( $fullControllerName );
 
             $bindingResult = BindingsResolver::resolveModelBinding(
-                $this->_controller, $this->_uriParseResult->getActionName() );
-            $this->_uriParseResult->addRequestParam( $bindingResult );
+                $this->_controller, $this->_uriParsedResult->getActionName() );
 
-            View::setAreaName( $this->_uriParseResult->getAreaName() );
-            View::setControllerName( $this->_uriParseResult->getControllerName() );
-            View::setActionName( $this->_uriParseResult->getActionName() );
+            $this->_uriParsedResult->addRequestParam( $bindingResult );
+
+            View::setAreaName( $this->_uriParsedResult->getAreaName() );
+            View::setControllerName( $this->_uriParsedResult->getControllerName() );
+            View::setActionName( $this->_uriParsedResult->getActionName() );
 
             call_user_func_array(
                 [
                     $this->_controller,
-                    $this->_uriParseResult->getActionName()
+                    $this->_uriParsedResult->getActionName()
                 ],
-                $this->_uriParseResult->getRequestParams() );
+                $this->_uriParsedResult->getRequestParams() );
 
         } catch ( \Exception $exception ) {
             echo $exception->getMessage();
@@ -62,18 +63,18 @@ class FrontController {
     }
 
     private function initController( $controllerName ) {
-        if ( !isset( $this->_uriParseResult->getAppStructure()
-            [ $this->_uriParseResult->getAreaName() ]
+        if ( !isset( $this->_uriParsedResult->getAppStructure()
+            [ $this->_uriParsedResult->getAreaName() ]
             [ $controllerName ]
-            [ $this->_uriParseResult->getActionName() ] )
+            [ $this->_uriParsedResult->getActionName() ] )
         ) {
             throw new \Exception( 'Invalid controller or method name.' );
         }
         $this->_controller = new $controllerName(
-            $this->_uriParseResult->getAreaName(),
-            $this->_uriParseResult->getControllerName(),
-            $this->_uriParseResult->getActionName(),
-            $this->_uriParseResult->getRequestParams()
+            $this->_uriParsedResult->getAreaName(),
+            $this->_uriParsedResult->getControllerName(),
+            $this->_uriParsedResult->getActionName(),
+            $this->_uriParsedResult->getRequestParams()
         );
     }
 

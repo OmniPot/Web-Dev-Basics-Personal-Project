@@ -12,7 +12,6 @@ class Router extends BaseRouter {
 
     public function __construct( $customRoutes ) {
         parent::__construct();
-
         $this->_customMappings = $customRoutes;
     }
 
@@ -35,7 +34,7 @@ class Router extends BaseRouter {
         $firstParam = ucfirst( $splitUri[ 0 ] );
         $secondParam = $splitUri[ 1 ];
         if ( count( $splitUri ) == 2 ) {
-            if ( isset( $this->appStructure[ $firstParam ] ) ) {
+            if ( isset( $this->_appStructure[ $firstParam ] ) ) {
                 throw new \Exception( 'No valid route found', 404 );
             }
 
@@ -44,7 +43,7 @@ class Router extends BaseRouter {
         } else if ( count( $splitUri ) >= 3 ) {
 
             $thirdParam = array_values( array_slice( $splitUri, 2 ) );
-            if ( !isset( $this->appStructure[ $firstParam ] ) ) {
+            if ( !isset( $this->_appStructure[ $firstParam ] ) ) {
                 $this->setControllerName( $firstParam );
                 $this->setActionName( $secondParam );
                 $this->setRequestParams( $thirdParam );

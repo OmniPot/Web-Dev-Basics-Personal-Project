@@ -2,29 +2,35 @@
 
 namespace Medieval\Framework\Routers;
 
+use Medieval\Config\AppConfig;
 use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Helpers\AnnotationParser;
 use Medieval\Framework\Helpers\DirectoryBuilder;
+use Medieval\Framework\Helpers\FileOperator;
 
 abstract class BaseRouter {
 
-    protected $appStructure = array();
+    protected $_appStructure = array();
     protected $_actionsArray = array();
 
     protected $_requestMethod;
     protected $_userRole;
 
-    protected $areaName;
-    protected $controllerName;
-    protected $actionName;
+    private $_areaName;
+    private $_controllerName;
+    private $_actionName;
 
     protected $requestParams = array();
 
     protected function __construct() {
         $this->_requestMethod = $_SERVER[ 'REQUEST_METHOD' ];
-        $this->_userRole = isset( $_SESSION[ 'role' ] ) ? $_SESSION[ 'role' ] : 'guest';
 
-        $this->registerAppStructure();
+        $this->_userRole = 'guest';
+        if ( isset( $_SESSION[ 'role' ] ) ) {
+            $this->_userRole = $_SESSION[ 'role' ];
+        }
+
+        $this->setupAppStructureConfig();
 
         $this->setAreaName( FrameworkConfig::DEFAULT_AREA );
         $this->setControllerName( FrameworkConfig::DEFAULT_CONTROLLER );
@@ -32,35 +38,43 @@ abstract class BaseRouter {
     }
 
     public function getAppStructure() {
-        return $this->appStructure;
+        return $this->_appStructure;
     }
 
-    protected function setAppStructure( $appStructure ) {
-        $this->appStructure = $appStructure;
+    protected function setAppStructure( $_appStructure ) {
+        $this->_appStructure = $_appStructure;
+    }
+
+    public function getActionsArray() {
+        return $this->_actionsArray;
+    }
+
+    public function setActionsArray( $actionsArray ) {
+        $this->_actionsArray = $actionsArray;
     }
 
     public function getAreaName() {
-        return $this->areaName;
+        return $this->_areaName;
     }
 
-    protected function setAreaName( $areaName ) {
-        $this->areaName = $areaName;
+    protected function setAreaName( $_areaName ) {
+        $this->_areaName = $_areaName;
     }
 
     public function getControllerName() {
-        return $this->controllerName;
+        return $this->_controllerName;
     }
 
-    protected function setControllerName( $controllerName ) {
-        $this->controllerName = $controllerName;
+    protected function setControllerName( $_controllerName ) {
+        $this->_controllerName = $_controllerName;
     }
 
     public function getActionName() {
-        return $this->actionName;
+        return $this->_actionName;
     }
 
-    protected function setActionName( $actionName ) {
-        $this->actionName = $actionName;
+    protected function setActionName( $_actionName ) {
+        $this->_actionName = $_actionName;
     }
 
     public function getRequestParams() {
@@ -77,11 +91,47 @@ abstract class BaseRouter {
      */
     public abstract function processRequestUri( $uri );
 
+    private function setupAppStructureConfig() {
+        if ( file_exists( FrameworkConfig::APP_STRUCTURE_NAME ) &&
+            is_readable( FrameworkConfig::APP_STRUCTURE_NAME )
+        ) {
+            include_once FrameworkConfig::APP_STRUCTURE_NAME;
+
+            if ( !empty( $expires ) ) {
+                $now = new \DateTime( 'now', new \DateTimeZone( AppConfig::TIME_ZONE ) );
+                $expires = new \DateTime( $expires, new \DateTimeZone( AppConfig::TIME_ZONE ) );
+
+                if ( $now->getTimestamp() > $expires->getTimestamp() ) {
+                    $this->removeAppStructureConfig();
+                    $this->writeAppStructureConfig();
+                }
+            }
+
+            if ( !empty( $appStructure ) && !empty( $actionsStructure ) ) {
+                $this->setAppStructure( $appStructure );
+                $this->setActionsArray( $actionsStructure );
+            }
+        } else {
+            $this->writeAppStructureConfig();
+        }
+    }
+
+    private function writeAppStructureConfig() {
+        $this->registerAppStructure();
+
+        $content = FileOperator::writeFile( $this->_appStructure, $this->_actionsArray );
+        file_put_contents( FrameworkConfig::APP_STRUCTURE_NAME, $content );
+    }
+
+    private function removeAppStructureConfig() {
+        unlink( FrameworkConfig::APP_STRUCTURE_NAME );
+    }
+
     private function registerAppStructure() {
         foreach ( glob( FrameworkConfig::AREAS_NAMESPACE . '*' . FrameworkConfig::AREA_SUFFIX ) as $areaPath ) {
             if ( file_exists( $areaPath ) && is_readable( $areaPath ) ) {
                 $areaName = str_replace( [ FrameworkConfig::AREAS_NAMESPACE, FrameworkConfig::AREA_SUFFIX ], '', $areaPath );
-                $this->appStructure[ $areaName ] = [ ];
+                $this->_appStructure[ $areaName ] = [ ];
 
                 $this->registerDefaultAreaControllers();
                 $this->registerAreaControllers( $areaPath, $areaName );
@@ -92,13 +142,13 @@ abstract class BaseRouter {
     }
 
     private function registerDefaultAreaControllers() {
-        $this->appStructure[ ucfirst( FrameworkConfig::DEFAULT_AREA ) ] = [ ];
+        $this->_appStructure[ ucfirst( FrameworkConfig::DEFAULT_AREA ) ] = [ ];
         $globParam = FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION;
 
         foreach ( glob( $globParam ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
                 $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( FrameworkConfig::PHP_EXTENSION, '', $controllerPath );
-                $this->appStructure[ FrameworkConfig::DEFAULT_AREA ][ $fullPath ] = [ ];
+                $this->_appStructure[ FrameworkConfig::DEFAULT_AREA ][ $fullPath ] = [ ];
             }
         }
     }
@@ -107,7 +157,7 @@ abstract class BaseRouter {
         foreach ( glob( $areaPath . FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
                 $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( FrameworkConfig::PHP_EXTENSION, '', $controllerPath );
-                $this->appStructure[ $areaName ][ $fullPath ] = [ ];
+                $this->_appStructure[ $areaName ][ $fullPath ] = [ ];
 
                 $this->registerControllersActions( $areaName, $fullPath );
                 $this->registerControllersActions( FrameworkConfig::DEFAULT_AREA,
@@ -132,7 +182,7 @@ abstract class BaseRouter {
                 continue;
             }
 
-            $this->appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
+            $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
             $realRoute = $this->getValidRouteUri( $areaName, $fullPath, $action->name );
 
             $actionDoc = AnnotationParser::getActionDoc( $action );
@@ -141,12 +191,12 @@ abstract class BaseRouter {
                 $parsedDocsArray = AnnotationParser::parseActionDoc( $actionDoc );
                 if ( $parsedDocsArray ) {
                     $parsedDocsArray[ 'defaultRoute' ] = $realRoute;
-                    $this->appStructure[ $areaName ][ $fullPath ][ $action->name ] = $parsedDocsArray;
-                    $this->_actionsArray[ $action->name ] = $this->appStructure[ $areaName ][ $fullPath ][ $action->name ];
+                    $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = $parsedDocsArray;
+                    $this->_actionsArray[ $action->name ] = $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ];
                 }
             } else {
-                $this->appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
-                $this->_actionsArray[ $action->name ] = $this->appStructure[ $areaName ][ $fullPath ][ $action->name ];
+                $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
+                $this->_actionsArray[ $action->name ] = $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ];
             }
         }
     }
