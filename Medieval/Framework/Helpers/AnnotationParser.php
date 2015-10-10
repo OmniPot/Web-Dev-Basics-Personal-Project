@@ -6,27 +6,25 @@ class AnnotationParser {
 
     private static $paramTypes = [ 'string', 'int', 'mixed' ];
 
-    const ROUTE_REGEX = '/@(route)\((?:\'|\")(.*)(?:\'|\")\)/';
-    const METHOD_REGEX = '/@(method)\s+(POST||PUT|DELETE)/';
+    // Action regexes
+    const ROUTE_REGEX = '/@(customRoute)\((?:\'|\")(.*)(?:\'|\")\)/';
+    const METHOD_REGEX = '/@(method)\s+(POST|GET|PUT|DELETE)/';
     const ADMIN_REGEX = '/@(admin)/';
     const AUTHORIZE_REGEX = '/@(authorize)/';
 
-    const DEFAULT_METHOD = 'GET';
-    const DEFAULT_AUTHORIZE = 0;
-    const DEFAULT_ADMIN = 0;
-
-    private static $docRegexes = [
+    private static $actionRegexes = [
         self::ROUTE_REGEX,
         self::METHOD_REGEX,
         self::ADMIN_REGEX,
         self::AUTHORIZE_REGEX
     ];
 
-    /**
-     * @param \ReflectionMethod $method
-     * @return \string[] $docComments
-     */
-    public static function getActionDoc( \ReflectionMethod $method ) {
+    // Property regexes
+    const REQUIRED_REGEX = '/@(required)/';
+
+    private static $propertyRegexes = [ self::REQUIRED_REGEX ];
+
+    public static function getDoc( $method ) {
         if ( $method ) {
             $docComment = $method->getDocComment();
             if ( $docComment ) {
@@ -37,38 +35,30 @@ class AnnotationParser {
         return false;
     }
 
-    public static function parseActionDoc( $doc ) {
-        $resultArray = [ ];
+    public static function parseDoc( $doc, $template, $type = 'action' ) {
+        if ( !$doc ) {
+            return $template;
+        }
 
-        foreach ( self::$docRegexes as $regex ) {
+        $regexCollection = $type . 'Regexes';
+        foreach ( self::$$regexCollection as $regex ) {
             preg_match( $regex, $doc, $routeMatches );
             if ( $routeMatches ) {
                 $parseMethod = 'parse' . ucfirst( $routeMatches[ 1 ] );
-                $resultArray[ $routeMatches[ 1 ] ] = self::$parseMethod( $routeMatches );
+                $template[ $routeMatches[ 1 ] ] = self::$parseMethod( $routeMatches );
             }
         }
 
-        if ( !isset( $resultArray[ 'method' ] ) || !$resultArray[ 'method' ] ) {
-            $resultArray[ 'method' ] = self::DEFAULT_METHOD;
-        }
-
-        if ( !isset( $resultArray[ 'route' ] ) ) {
-            $resultArray[ 'route' ] = [ 'uri' => '', 'params' => [ ] ];
-        }
-
-        $resultArray[ 'admin' ] = isset( $resultArray[ 'admin' ] ) ? true : false;
-        $resultArray[ 'authorize' ] = isset( $resultArray[ 'authorize' ] ) ? true : false;
-
-        return $resultArray;
+        return $template;
     }
 
-    private static function parseRoute( $matches ) {
+    private static function parseCustomRoute( $matches ) {
         $exploded = explode( '/', $matches[ 2 ] );
-        $routeResult = [ 'uri' => '', 'params' => [ ] ];
+        $routeResult = [ 'uri' => '', 'uriParams' => [ ] ];
 
         foreach ( $exploded as $key ) {
             if ( in_array( $key, self::$paramTypes ) ) {
-                $routeResult[ 'params' ][] = $key;
+                $routeResult[ 'uriParams' ][] = $key;
             } else {
                 $routeResult[ 'uri' ] .= "$key/";
             }
@@ -90,4 +80,9 @@ class AnnotationParser {
     private static function parseAuthorize( $matches ) {
         return isset( $matches[ 1 ] ) ? true : false;
     }
+
+    private static function parseRequired( $matches ) {
+        return isset( $matches[ 1 ] ) ? true : false;
+    }
+
 }

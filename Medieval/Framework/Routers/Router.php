@@ -3,6 +3,7 @@
 namespace Medieval\Framework\Routers;
 
 use Medieval\Config\RoutingConfig;
+use Medieval\Framework\Helpers\DirectoryHelper;
 
 class Router extends BaseRouter {
 
@@ -12,16 +13,17 @@ class Router extends BaseRouter {
 
     private $_appStructure;
     private $_actionsArray;
+    private $_customMappings;
 
-    public function __construct( $_appStructure, $_actionsArray ) {
+    public function __construct( $_appStructure, $_actionsArray, $_customMappings ) {
         parent::__construct();
 
         $this->setAppStructure( $_appStructure );
         $this->setActionsArray( $_actionsArray );
-
-        $this->_customMappings = RoutingConfig::getCustomMappings();
+        $this->setCustomMappings( $_customMappings );
     }
 
+    // Properties
     public function getAppStructure() {
         return $this->_appStructure;
     }
@@ -38,67 +40,67 @@ class Router extends BaseRouter {
         $this->_actionsArray = $actionsArray;
     }
 
-    public function processRequestUri( $uri ) {
+    public function getCustomMappings() {
+        return $this->_customMappings;
+    }
+
+    public function setCustomMappings( $customMappings ) {
+        $this->_customMappings = $customMappings;
+    }
+
+    // Methods
+    public function processRequestUri( $uri, $method, $userRole, $postData ) {
         if ( RoutingConfig::ROUTING_TYPE != 'default' ) {
-            $result = $this->processCustomRequestUri( $uri );
+            $result = $this->processCustomRequestUri( $uri, $method, $userRole, $postData );
         } else {
-            $result = $this->processDefaultRequestUri( $uri );
+            $result = $this->processDefaultRequestUri( $uri, $postData );
         }
 
         return $result;
     }
 
-    private function processDefaultRequestUri( $uri ) {
-        $splitUri = explode( '/', trim( $uri, ' ' ) );
-        if ( count( $splitUri ) < 2 ) {
+    private function processDefaultRequestUri( $uri, $postData ) {
+        $uriParts = explode( '/', trim( $uri, ' ' ) );
+        if ( count( $uriParts ) < 3 ) {
             throw new \Exception( 'No valid route found', 404 );
         }
 
-        $firstParam = ucfirst( $splitUri[ 0 ] );
-        $secondParam = $splitUri[ 1 ];
-        if ( count( $splitUri ) == 2 ) {
-            if ( isset( $this->getAppStructure()[ $firstParam ] ) ) {
-                throw new \Exception( 'No valid route found', 404 );
-            }
+        $area = ucfirst( $uriParts[ 0 ] );
+        $controller = ucfirst( $uriParts[ 1 ] );
+        $action = $uriParts[ 2 ];
+        $params = array_slice( $uriParts, 3 );
 
-            $this->setControllerName( $firstParam );
-            $this->setActionName( $secondParam );
-        } else if ( count( $splitUri ) >= 3 ) {
+        $fullControllerName = DirectoryHelper::getControllerPath( $area, $controller );
 
-            $thirdParam = array_values( array_slice( $splitUri, 2 ) );
-            if ( !isset( $this->getAppStructure()[ $firstParam ] ) ) {
-                $this->setControllerName( $firstParam );
-                $this->setActionName( $secondParam );
-                $this->setRequestParams( $thirdParam );
-            } else {
+        if ( !isset( $this->getAppStructure()[ $area ][ $fullControllerName ][ $action ] ) ) {
+            throw new \Exception( 'No valid route found', 404 );
+        }
 
-                $thirdParam = $splitUri[ 2 ];
-                $fourthParam = array_slice( $splitUri, 3 );
+        $this->setAreaName( $area );
+        $this->setControllerName( ucfirst( $controller ) );
+        $this->setActionName( $action );
+        $this->setRequestParams( $params );
 
-                $this->setAreaName( $firstParam );
-                $this->setControllerName( ucfirst( $secondParam ) );
-                $this->setActionName( $thirdParam );
-                $this->setRequestParams( $fourthParam );
-            }
-        };
+        if ( !$this->validatePostData( $postData ) ) {
+            throw new \Exception( 'Invalid data supplied' );
+        }
 
         return new RequestUriResult(
             $this->getAreaName(),
             $this->getControllerName(),
             $this->getActionName(),
-            $this->getAppStructure(),
             $this->getRequestParams()
         );
     }
 
-    private function processCustomRequestUri( $uri ) {
-        $uri = $this->matchCustomRoutes( $this->getActionsArray(), $uri );
-        $uri = $this->matchCustomRoutes( $this->_customMappings, $uri );
+    private function processCustomRequestUri( $uri, $method, $userRole, $postData ) {
+        $uri = $this->matchCustomRoutes( $this->getActionsArray(), $uri, $method, $userRole );
+        $uri = $this->matchCustomRoutes( $this->getCustomMappings(), $uri, $method, $userRole );
 
-        return $this->processDefaultRequestUri( $uri );
+        return $this->processDefaultRequestUri( $uri, $postData );
     }
 
-    private function matchCustomRoutes( $collection, $uri ) {
+    private function matchCustomRoutes( $collection, $uri, $method, $userRole ) {
         $uri = rtrim( $uri, '/ ' );
         $uriParts = explode( '/', $uri );
 
@@ -107,39 +109,77 @@ class Router extends BaseRouter {
                 continue;
             }
 
-            $customUri = $value[ 'route' ][ 'uri' ];
-            $paramTypes = $value[ 'route' ][ 'params' ];
+            $customUriParts = explode( '/', rtrim( $value[ 'customRoute' ][ 'uri' ], '/ ' ) );
+            $defaultUriParts = explode( '/', rtrim( $value[ 'defaultRoute' ], '/ ' ) );
 
-            $customUriParts = explode( '/', rtrim( $customUri, '/ ' ) );
-            $uriMatch = array_slice( $uriParts, 0, count( $customUriParts ) ) == $customUriParts;
+            $customUriMatch = array_slice( $uriParts, 0, count( $customUriParts ) ) == $customUriParts;
+            $defaultUriMatch = array_slice( $uriParts, 0, count( $defaultUriParts ) ) == $defaultUriParts;
 
-            if ( $uriMatch ) {
+            if ( $customUriMatch || $defaultUriMatch ) {
 
-                if ( !$this->validateActionRestrictions( $value[ 'method' ], $value[ 'authorize' ], $value[ 'admin' ] ) ) {
+                if ( $method != $value[ 'method' ] ) {
+                    $invalidMethod = true;
                     continue;
                 }
 
-                $requestParams = array_slice(
-                    $uriParts, count( $customUriParts ), count( $uriParts ) );
-
-                $this->validateRequestParams( $requestParams, $paramTypes );
-                $uri = $value[ 'defaultRoute' ];
-
-                if ( !empty( $requestParams ) ) {
-                    $uri .= '/' . implode( '/', $requestParams );
+                if ( !$this->validateActionAuthorization( $userRole, $value[ 'authorize' ], $value[ 'admin' ] ) ) {
+                    header( 'Location: /' . RoutingConfig::UNAUTHORIZED_REDIRECT );
                 }
+
+                $customRequestParams = array_slice( $uriParts, count( $customUriParts ), count( $uriParts ) );
+                $defaultRequestParams = array_slice( $uriParts, count( $defaultUriParts ), count( $uriParts ) );
+
+                if ( !$this->validateRequestParams( $customRequestParams, $value[ 'customRoute' ][ 'uriParams' ] ) &&
+                    !$this->validateRequestParams( $defaultRequestParams, $value[ 'customRoute' ][ 'uriParams' ] )
+                ) {
+                    $invalidRequestParams = true;
+                    continue;
+                }
+
+                $uri = $value[ 'defaultRoute' ];
+                $uri .= !empty( $requestParams ) ? '/' . implode( '/', $requestParams ) : '';
 
                 return $uri;
             }
         }
 
+        if ( isset( $invalidMethod ) ) {
+            throw new \Exception( 'Invalid action method' );
+        }
+
+        if ( isset( $invalidRequestParams ) ) {
+            throw new \Exception( 'Invalid request parameters' );
+        }
+
         return $uri;
     }
 
-    private function validateActionRestrictions( $actionRequestMethod, $requiredUser, $requiredAdmin ) {
-        if ( $this->_requestMethod != $actionRequestMethod ) {
-            return false;
+    private function validatePostData( $postData ) {
+        $actionRoute = $this->getActionsArray()[ $this->getActionName() ][ 'customRoute' ];
+
+        if ( !empty( $actionRoute[ 'bindingParams' ] ) ) {
+            $bindings = $actionRoute[ 'bindingParams' ];
+
+            foreach ( $bindings as $modelName => $properties ) {
+                $bindingModel = new $modelName();
+
+                foreach ( $properties as $propName => $restriction ) {
+                    $presentInPostData = isset( $postData[ $propName ] ) && $postData[ $propName ];
+                    if ( $restriction[ 'required' ] && !$presentInPostData ) {
+                        return false;
+                    }
+
+                    $bindingModel->$propName = $postData[ $propName ];
+                }
+
+                $this->addRequestParam( $bindingModel );
+            }
         }
+
+        return true;
+    }
+
+    private function validateActionAuthorization( $userRole, $requiredUser, $requiredAdmin ) {
 
         $requiredAuthLevel = 'guest';
         if ( $requiredUser ) {
@@ -149,10 +189,10 @@ class Router extends BaseRouter {
             $requiredAuthLevel = 'admin';
         }
 
-        if ( ( $requiredAuthLevel == 'admin' && $this->_userRole != 'admin' ) ||
-            ( $requiredAuthLevel == 'user' && ( $this->_userRole != 'admin' && $this->_userRole != 'user' ) )
+        if ( ( $requiredAuthLevel == 'admin' && $userRole != 'admin' ) ||
+            ( $requiredAuthLevel == 'user' && ( $userRole != 'admin' && $userRole != 'user' ) )
         ) {
-            throw new \Exception( 'Unauthorized access' );
+            return false;
         }
 
         return true;
@@ -160,7 +200,7 @@ class Router extends BaseRouter {
 
     private function validateRequestParams( $requestParams, $paramTypes ) {
         if ( count( $requestParams ) != count( $paramTypes ) ) {
-            throw new \Exception( 'Invalid request parameters count' );
+            return false;
         }
 
         for ( $i = 0; $i < count( $paramTypes ); $i++ ) {
@@ -179,8 +219,10 @@ class Router extends BaseRouter {
             }
 
             if ( !$typeMatches ) {
-                throw new \Exception( "Invalid parameter type for $requestParams[$i] expected $paramTypes[$i]" );
+                return false;
             };
         }
+
+        return true;
     }
 }

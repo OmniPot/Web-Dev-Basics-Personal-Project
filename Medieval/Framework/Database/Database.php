@@ -1,6 +1,6 @@
 <?php
 
-namespace Medieval\Framework;
+namespace Medieval\Framework\Database;
 
 use Medieval\Framework\Drivers\DriverFactory;
 

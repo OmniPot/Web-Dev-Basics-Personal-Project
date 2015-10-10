@@ -10,11 +10,11 @@ use Medieval\ViewModels\WelcomeViewModel;
 
 class HomeController extends BaseController {
 
+    /**
+     * @authorize
+     * @customRoute('home/welcome')
+     */
     public function welcome() {
-        if ( !$this->isLogged() ) {
-            $this->redirect( $this->unauthorizedLocation );
-        }
-
         $repo = new UserRepository( $this->databaseInstance );
         $userInfo = $repo->getInfo( $_SESSION[ 'id' ] );
 

@@ -14,6 +14,23 @@ class AppStructureConfig {
     private $_appStructure = array();
     private $_actionsArray = array();
 
+    private $_actionDataTemplate = [
+        'customRoute' => [
+            'uri' => '',
+            'uriParams' => [ ],
+            'bindingParams' => [ ]
+        ],
+        'method' => 'GET',
+        'authorize' => false,
+        'admin' => false,
+        'defaultRoute' => ''
+    ];
+
+    private $_propertyDataTemplate = [
+        'required' => false
+    ];
+
+    // Properties
     private function __construct() {
 
     }
@@ -51,21 +68,22 @@ class AppStructureConfig {
 
             if ( $now->getTimestamp() > $expires->getTimestamp() ) {
                 unlink( FrameworkConfig::APP_STRUCTURE_NAME );
-                self::writeConfig();
+                $this->writeConfig();
             }
 
-            self::setAppStructure( $appStructure );
-            self::setActionsArray( $actionsStructure );
+            $this->setAppStructure( $appStructure );
+            $this->setActionsArray( $actionsStructure );
         }
     }
 
     private function writeConfig() {
-        self::registerAppStructure();
+        $this->registerAppStructure();
 
-        $content = FileHelper::writeFile( $this->_appStructure, $this->_actionsArray );
+        $content = FileHelper::writeFile( $this->getAppStructure(), $this->getActionsArray() );
         file_put_contents( FrameworkConfig::APP_STRUCTURE_NAME, $content );
     }
 
+    // Methods
     private function registerAppStructure() {
         foreach ( glob( FrameworkConfig::AREAS_NAMESPACE . '*' . FrameworkConfig::AREA_SUFFIX ) as $areaPath ) {
             if ( file_exists( $areaPath ) && is_readable( $areaPath ) ) {
@@ -74,6 +92,7 @@ class AppStructureConfig {
 
                 $this->registerDefaultAreaControllers();
                 $this->registerAreaControllers( $areaPath, $areaName );
+
             } else {
                 throw new \Exception( 'Directory not found: ' . $areaPath );
             }
@@ -117,27 +136,42 @@ class AppStructureConfig {
         $actions = $class->getMethods();
 
         foreach ( $actions as $action ) {
-            if ( !$action->isPublic() ) {
+            if ( !$action->isPublic() || $action->name == '__construct' ) {
                 continue;
             }
 
             $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
             $realRoute = $this->validateRouteUri( $areaName, $fullPath, $action->name );
 
-            $actionDoc = AnnotationParser::getActionDoc( $action );
+            $actionDoc = AnnotationParser::getDoc( $action );
+            $actionData = AnnotationParser::parseDoc( $actionDoc, $this->_actionDataTemplate, 'action' );
+            $actionData[ 'defaultRoute' ] = $realRoute;
 
-            if ( $actionDoc ) {
-                $parsedDocsArray = AnnotationParser::parseActionDoc( $actionDoc );
-                if ( $parsedDocsArray ) {
-                    $parsedDocsArray[ 'defaultRoute' ] = $realRoute;
-                    $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = $parsedDocsArray;
-                    $this->_actionsArray[ $action->name ] = $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ];
+            $actionData = $this->registerActionBindings( $action, $actionData );
+
+            $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = $actionData;
+            $this->_actionsArray[ $action->name ] = $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ];
+        }
+    }
+
+    private function registerActionBindings( $action, $actionData ) {
+        foreach ( $action->getParameters() as $param ) {
+            if ( $param->getClass() ) {
+                $className = $param->getClass()->name;
+                $actionData[ 'customRoute' ][ 'bindingParams' ][ $className ] = [ ];
+                $paramReflection = new \ReflectionClass( $className );
+
+                foreach ( $paramReflection->getProperties() as $property ) {
+                    $propertyData = AnnotationParser::parseDoc(
+                        $property->getDocComment(),
+                        $this->_propertyDataTemplate,
+                        'property' );
+                    $actionData[ 'customRoute' ][ 'bindingParams' ][ $className ][ $property->name ] = $propertyData;
                 }
-            } else {
-                $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ] = [ ];
-                $this->_actionsArray[ $action->name ] = $this->_appStructure[ $areaName ][ $fullPath ][ $action->name ];
             }
         }
+
+        return $actionData;
     }
 
     private function validateRouteUri( $areaName, $fullControllerName, $actionName ) {

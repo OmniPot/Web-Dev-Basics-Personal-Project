@@ -2,11 +2,11 @@
 
 namespace Medieval\Areas\TestArea\Controllers;
 
-use Medieval\Areas\TestArea\BindingModels\LoginBindingModel;
-use Medieval\Areas\TestArea\BindingModels\RegisterBindingModel;
 use Medieval\Framework\BaseController;
 use Medieval\Framework\View;
 
+use Medieval\Areas\TestArea\BindingModels\LoginBindingModel;
+use Medieval\Areas\TestArea\BindingModels\RegisterBindingModel;
 use Medieval\Areas\TestArea\Repositories\UserRepository;
 
 use Medieval\Areas\TestArea\ViewModels\RegisterViewModel;
@@ -16,37 +16,42 @@ class UsersController extends BaseController {
 
     /**
      * @method POST
-     * @route('user/login')
+     * @customRoute('user/login')
      * @param LoginBindingModel $model
      * @return View
      */
     public function login( LoginBindingModel $model ) {
-        $username = $model->getUsername();
-        $password = $model->getPassword();
+        $username = $model->username;
+        $password = $model->password;
 
         $this->initLogin( $username, $password );
     }
 
     /**
-     * @route('user/login')
+     * @customRoute('user/login')
      * @return View
      */
     public function loginPage() {
+        if ( $this->isLogged() ) {
+            $this->redirect( $this->alreadyAuthorizedLocation );
+        }
+
         $viewModel = new LoginViewModel();
         return new View( $viewModel );
     }
 
     /**
      * @method POST
-     * @route('user/register')
+     * @customRoute('user/register')
      * @param RegisterBindingModel $model
      * @throws \Exception
      */
     public function register( RegisterBindingModel $model ) {
-        $username = $model->getUsername();
-        $password = $model->getPassword();
-        $confirm = $model->getConfirm();
-        $name = $model->getName();
+        $username = $model->username;
+        $password = $model->password;
+        $confirm = $model->confirm;
+
+        $name = isset( $model->name ) ? $model->name : null;
 
         if ( $password != $confirm ) {
             throw new \Exception( 'Password and confirmation do not match' );
@@ -59,21 +64,25 @@ class UsersController extends BaseController {
     }
 
     /**
-     * @route('user/register')
+     * @customRoute('user/register')
      */
     public function registerPage() {
+        if ( $this->isLogged() ) {
+            $this->redirect( $this->alreadyAuthorizedLocation );
+        }
+
         $viewModel = new RegisterViewModel();
         return new View( $viewModel );
     }
 
     /**
      * @method POST
-     * @route('user/logout')
+     * @customRoute('user/logout')
      */
     public function logout() {
         session_destroy();
         $this->redirect( $this->unauthorizedLocation );
-        die;
+        exit;
     }
 
     private function initLogin( $username, $password ) {

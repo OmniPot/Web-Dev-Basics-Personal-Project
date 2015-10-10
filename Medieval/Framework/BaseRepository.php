@@ -2,6 +2,8 @@
 
 namespace Medieval\Framework;
 
+use Medieval\Framework\Database\Database;
+
 class BaseRepository {
 
     /** @var $database Database */

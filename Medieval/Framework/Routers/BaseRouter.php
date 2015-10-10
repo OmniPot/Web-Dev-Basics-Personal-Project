@@ -6,9 +6,6 @@ use Medieval\Config\AppConfig;
 
 abstract class BaseRouter {
 
-    protected $_requestMethod;
-    protected $_userRole;
-
     private $_areaName;
     private $_controllerName;
     private $_actionName;
@@ -16,12 +13,6 @@ abstract class BaseRouter {
     protected $requestParams = array();
 
     protected function __construct() {
-        $this->_requestMethod = $_SERVER[ 'REQUEST_METHOD' ];
-        $this->_userRole = 'guest';
-
-        if ( isset( $_SESSION[ 'role' ] ) ) {
-            $this->_userRole = $_SESSION[ 'role' ];
-        }
 
         $this->setAreaName( AppConfig::DEFAULT_AREA );
         $this->setControllerName( AppConfig::DEFAULT_CONTROLLER );
@@ -60,9 +51,9 @@ abstract class BaseRouter {
         $this->requestParams = $requestParams;
     }
 
-    /**
-     * @param $uri string
-     * @return RequestUriResult $result
-     */
-    public abstract function processRequestUri( $uri );
+    protected function addRequestParam( $requestParam ) {
+        $this->requestParams[] = $requestParam;
+    }
+
+    public abstract function processRequestUri( $uri, $method, $userRole, $postData );
 }

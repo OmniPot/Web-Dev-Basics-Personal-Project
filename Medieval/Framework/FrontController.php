@@ -2,15 +2,19 @@
 
 namespace Medieval\Framework;
 
-use Medieval\Framework\Config\FrameworkRoutingConfig;
-
-use Medieval\Framework\Helpers\BindingHelper;
+use Medieval\Config\RoutingConfig;
 use Medieval\Framework\Helpers\DirectoryHelper;
+use Medieval\Framework\Routers\RequestUriResult;
 use Medieval\Framework\Routers\Router;
 
 class FrontController {
 
     private static $_instance = null;
+
+    private $_requestUri;
+    private $_requestMethod;
+    private $_userRole;
+    private $_postData;
 
     /** @var BaseController $_controller */
     private $_controller;
@@ -22,62 +26,126 @@ class FrontController {
     private $_uriParsedResult;
 
     private function __construct( $router ) {
-        $this->_router = $router;
-    }
-
-    public function dispatch() {
         if ( !$_GET || !isset( $_GET[ 'uri' ] ) ) {
-            header( 'Location: ' . FrameworkRoutingConfig::AUTHORIZED_REDIRECT );
+            header( 'Location: ' . RoutingConfig::AUTHORIZED_REDIRECT );
             exit;
         }
 
+        $this->setRouter( $router );
+        $this->setRequestUri( $_GET[ 'uri' ] );
+        $this->setRequestMethod( $_SERVER[ 'REQUEST_METHOD' ] );
+        $this->setUserRole( isset( $_SESSION[ 'role' ] ) ? $_SESSION[ 'role' ] : 'guest' );
+        $this->setPostData( isset( $_POST ) ? $_POST : [ ] );
+    }
+
+    public function getRequestUri() {
+        return $this->_requestUri;
+    }
+
+    private function setRequestUri( $requestUri ) {
+        $this->_requestUri = $requestUri;
+    }
+
+    public function getRequestMethod() {
+        return $this->_requestMethod;
+    }
+
+    private function setRequestMethod( $requestMethod ) {
+        $this->_requestMethod = $requestMethod;
+    }
+
+    public function getUserRole() {
+        return $this->_userRole;
+    }
+
+    private function setUserRole( $userRole ) {
+        $this->_userRole = $userRole;
+    }
+
+    public function getController() {
+        return $this->_controller;
+    }
+
+    private function setController( $controller ) {
+        $this->_controller = $controller;
+    }
+
+    public function getRouter() {
+        return $this->_router;
+    }
+
+    private function setRouter( $router ) {
+        $this->_router = $router;
+    }
+
+    public function getUriParsedResult() {
+        return $this->_uriParsedResult;
+    }
+
+    private function setUriParsedResult( $uriParsedResult ) {
+        $this->_uriParsedResult = $uriParsedResult;
+    }
+
+    public function getPostData() {
+        return $this->_postData;
+    }
+
+    private function setPostData( $postData ) {
+        $this->_postData = $postData;
+    }
+
+    public function dispatch() {
+
         try {
-            $this->_uriParsedResult = $this->_router->processRequestUri( $_GET[ 'uri' ] );
-
-            $this->initController();
-
-            $bindingResult = BindingHelper::resolveModelBinding(
-                $this->_controller,
-                $this->_uriParsedResult->getActionName()
+            $this->setUriParsedResult(
+                $this->getRouter()->processRequestUri(
+                    $this->getRequestUri(),
+                    $this->getRequestMethod(),
+                    $this->getUserRole(),
+                    $this->getPostData()
+                )
             );
 
-            $this->_uriParsedResult->addRequestParam( $bindingResult );
+            $this->initController( $this->getUriParsedResult() );
 
-            View::setAreaName( $this->_uriParsedResult->getAreaName() );
-            View::setControllerName( $this->_uriParsedResult->getControllerName() );
-            View::setActionName( $this->_uriParsedResult->getActionName() );
+            View::setAreaName( $this->getUriParsedResult()->getAreaName() );
+            View::setControllerName( $this->getUriParsedResult()->getControllerName() );
+            View::setActionName( $this->getUriParsedResult()->getActionName() );
 
             call_user_func_array(
                 [
-                    $this->_controller,
-                    $this->_uriParsedResult->getActionName()
+                    $this->getController(),
+                    $this->getUriParsedResult()->getActionName()
                 ],
-                $this->_uriParsedResult->getRequestParams() );
+                $this->getUriParsedResult()->getRequestParams() );
 
         } catch ( \Exception $exception ) {
             echo $exception->getMessage();
         }
     }
 
-    private function initController() {
+    /**
+     * @param RequestUriResult $requestUriResult
+     * @throws \Exception
+     */
+    private function initController( $requestUriResult ) {
+        if ( !$requestUriResult ) {
+            throw new \Exception( 'Url parse error' );
+        }
+
         $fullControllerName = DirectoryHelper::getControllerPath(
-            $this->_uriParsedResult->getAreaName(),
-            $this->_uriParsedResult->getControllerName()
+            $requestUriResult->getAreaName(),
+            $requestUriResult->getControllerName()
         );
 
-        if ( !isset( $this->_uriParsedResult->getAppStructure()
-            [ $this->_uriParsedResult->getAreaName() ]
-            [ $fullControllerName ]
-            [ $this->_uriParsedResult->getActionName() ] )
-        ) {
-            throw new \Exception( 'Invalid controller or method name.' );
-        }
-        $this->_controller = new $fullControllerName(
-            $this->_uriParsedResult->getAreaName(),
-            $this->_uriParsedResult->getControllerName(),
-            $this->_uriParsedResult->getActionName(),
-            $this->_uriParsedResult->getRequestParams()
+        $controller = new $fullControllerName(
+            $requestUriResult->getAreaName(),
+            $requestUriResult->getControllerName(),
+            $requestUriResult->getActionName(),
+            $requestUriResult->getRequestParams()
         );
+
+        $this->setController( $controller );
     }
 
     /**

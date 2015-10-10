@@ -11,8 +11,7 @@ class ProfileController extends BaseController {
 
     /**
      * @authorize
-     * @method GET
-     * @route('profile/me')
+     * @customRoute('profile/me')
      */
     public function myProfile() {
         $repo = new UserRepository( $this->databaseInstance );

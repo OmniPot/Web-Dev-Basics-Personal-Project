@@ -4,19 +4,15 @@ namespace Medieval\Framework\Routers;
 
 class RequestUriResult {
 
-    private $_appStructure;
-
     private $_areaName;
     private $_controllerName;
     private $_actionName;
-
     private $_requestParams;
 
-    public function __construct( $_areaName, $_controllerName, $_actionName, $areas, $_requestParams = array() ) {
+    public function __construct( $_areaName, $_controllerName, $_actionName, $_requestParams = array() ) {
         $this->setAreaName( $_areaName );
         $this->setControllerName( $_controllerName );
         $this->setActionName( $_actionName );
-        $this->setAppStructure( $areas );
         $this->setRequestParams( $_requestParams );
     }
 
@@ -50,17 +46,5 @@ class RequestUriResult {
 
     public function setRequestParams( $requestParams ) {
         $this->_requestParams = $requestParams;
-    }
-
-    public function addRequestParam( $requestParams ) {
-        $this->_requestParams[] = $requestParams;
-    }
-
-    public function getAppStructure() {
-        return $this->_appStructure;
-    }
-
-    public function setAppStructure( $areas ) {
-        $this->_appStructure = $areas;
     }
 }

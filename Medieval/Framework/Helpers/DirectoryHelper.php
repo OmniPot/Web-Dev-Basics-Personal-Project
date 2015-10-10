@@ -8,11 +8,11 @@ class DirectoryHelper {
 
     public static function getControllerPath( $areaName, $controllerName ) {
         if ( !$areaName ) {
-            throw new \Exception( 'No area name to get the controller name from' );
+            throw new \Exception( 'Invalid area name' );
         }
 
         if ( !$controllerName ) {
-            throw new \Exception( 'No controller name to process' );
+            throw new \Exception( 'Invalid controller name' );
         }
 
         $fullControllerName = FrameworkConfig::VENDOR_NAMESPACE;
@@ -27,7 +27,7 @@ class DirectoryHelper {
 
     public static function getControllerName( $controllerFullPath ) {
         if ( !$controllerFullPath ) {
-            throw new \Exception( 'No full name to extract from' );
+            throw new \Exception( 'Invalid full controller name' );
         }
 
         $controllerNameRegex =

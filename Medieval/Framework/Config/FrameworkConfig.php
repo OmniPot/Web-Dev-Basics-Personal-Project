@@ -9,7 +9,7 @@ class FrameworkConfig {
     const PHP_EXTENSION = '.php';
 
     const APP_STRUCTURE_NAME = 'appStructure' . self::PHP_EXTENSION;
-    const APP_STRUCTURE_CONFIG_RENEW_TIME = 'PT30S';
+    const APP_STRUCTURE_CONFIG_RENEW_TIME = 'PT5S';
 
     const DEFAULT_AREA = AppConfig::DEFAULT_AREA;
     const AREA_SUFFIX = AppConfig::AREA_SUFFIX . DIRECTORY_SEPARATOR;

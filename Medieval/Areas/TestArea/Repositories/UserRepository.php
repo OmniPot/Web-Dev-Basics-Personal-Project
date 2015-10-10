@@ -68,7 +68,7 @@ class UserRepository extends BaseRepository {
                 ];
             }
 
-            throw new \Exception( 'Wrong password' );
+            throw new \Exception( 'Login failed' );
         }
 
         throw new \Exception( 'Login failed' );

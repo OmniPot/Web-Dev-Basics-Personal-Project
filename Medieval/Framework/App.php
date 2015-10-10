@@ -2,9 +2,10 @@
 
 namespace Medieval\Framework;
 
+use Medieval\Config\RoutingConfig;
 use Medieval\Framework\Config\AppStructureConfig;
-use Medieval\Framework\Config\FrameworkRoutingConfig;
 use Medieval\Framework\Config\DatabaseConfig;
+use Medieval\Framework\Database\Database;
 use Medieval\Framework\Routers\Router;
 
 class App {
@@ -33,7 +34,8 @@ class App {
 
         $_router = new Router(
             $_appStructureConfig->getAppStructure(),
-            $_appStructureConfig->getActionsArray()
+            $_appStructureConfig->getActionsArray(),
+            RoutingConfig::getCustomMappings()
         );
 
         $_frontController = FrontController::getInstance( $_router );
