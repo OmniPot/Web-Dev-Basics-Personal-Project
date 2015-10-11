@@ -3,6 +3,7 @@
 namespace Medieval\Framework;
 
 use Medieval\Config\RoutingConfig;
+use Medieval\Controllers\BaseController;
 use Medieval\Framework\Helpers\DirectoryHelper;
 use Medieval\Framework\Routers\RequestUriResult;
 use Medieval\Framework\Routers\Router;

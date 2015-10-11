@@ -3,7 +3,7 @@
 namespace Medieval\Areas\ProfileArea\Controllers;
 
 use Medieval\Areas\TestArea\Repositories\UserRepository;
-use Medieval\Framework\BaseController;
+use Medieval\Controllers\BaseController;
 use Medieval\Areas\ProfileArea\ViewModels\ProfileViewModel;
 use Medieval\Framework\View;
 

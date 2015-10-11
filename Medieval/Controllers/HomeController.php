@@ -3,7 +3,6 @@
 namespace Medieval\Controllers;
 
 use Medieval\Areas\TestArea\Repositories\UserRepository;
-use Medieval\Framework\BaseController;
 use Medieval\Framework\View;
 
 use Medieval\ViewModels\WelcomeViewModel;

@@ -105,9 +105,6 @@ class Router extends BaseRouter {
         $uriParts = explode( '/', $uri );
 
         foreach ( $collection as $key => $value ) {
-            if ( empty( $value ) ) {
-                continue;
-            }
 
             $customUriParts = explode( '/', rtrim( $value[ 'customRoute' ][ 'uri' ], '/ ' ) );
             $defaultUriParts = explode( '/', rtrim( $value[ 'defaultRoute' ], '/ ' ) );
@@ -115,15 +112,12 @@ class Router extends BaseRouter {
             $customUriMatch = array_slice( $uriParts, 0, count( $customUriParts ) ) == $customUriParts;
             $defaultUriMatch = array_slice( $uriParts, 0, count( $defaultUriParts ) ) == $defaultUriParts;
 
+
             if ( $customUriMatch || $defaultUriMatch ) {
 
                 if ( $method != $value[ 'method' ] ) {
                     $invalidMethod = true;
                     continue;
-                }
-
-                if ( !$this->validateActionAuthorization( $userRole, $value[ 'authorize' ], $value[ 'admin' ] ) ) {
-                    header( 'Location: /' . RoutingConfig::UNAUTHORIZED_REDIRECT );
                 }
 
                 $customRequestParams = array_slice( $uriParts, count( $customUriParts ), count( $uriParts ) );
@@ -134,6 +128,10 @@ class Router extends BaseRouter {
                 ) {
                     $invalidRequestParams = true;
                     continue;
+                }
+
+                if ( !$this->validateActionAuthorization( $userRole, $value[ 'authorize' ], $value[ 'admin' ] ) ) {
+                    header( 'Location: /' . RoutingConfig::UNAUTHORIZED_REDIRECT );
                 }
 
                 $uri = $value[ 'defaultRoute' ];

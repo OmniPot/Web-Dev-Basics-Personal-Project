@@ -14,17 +14,17 @@ class RoutingConfig {
     public static function getCustomMappings() {
 
         // Example custom route
-//        self::$_customMappings[] = [
-//            'route' => [
-//                'uri' => 'welcome',
-//                'uriParams' => [ ],
-//                'bindingParams' => [ ]
-//            ],
-//            'method' => 'GET',
-//            'authorize' => false,
-//            'admin' => false,
-//            'defaultRoute' => 'main/home/welcome'
-//        ];
+        self::$_customMappings[] = [
+            'customRoute' => [
+                'uri' => 'home',
+                'uriParams' => [ ],
+                'bindingParams' => [ ]
+            ],
+            'method' => 'GET',
+            'authorize' => true,
+            'admin' => false,
+            'defaultRoute' => 'main/home/welcome'
+        ];
 
         return self::$_customMappings;
     }

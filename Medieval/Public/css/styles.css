@@ -1,23 +1,21 @@
 body {
-    padding: 5%;
+    font-family: 'MedievalSharp', cursive;
 }
 
 div {
-    display: block;
     margin: 0 auto;
     text-align: center;
 }
 
 form {
-    display: block;
-    width: 50%;
+    width: 25%;
     margin: 0 auto;
 }
 
 input[type="text"], input[type="password"], input[type="submit"] {
-    width: 50%;
-    padding: 1%;
-    margin: 1%;
+    width: 100%;
+    padding: 2%;
+    margin: 2%;
     border: 1px solid #ccc;
 }
 

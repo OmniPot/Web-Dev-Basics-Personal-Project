@@ -40,17 +40,19 @@ class DirectoryHelper {
     }
 
     public static function getViewPath( $controllerName, $actionName, $areaName = null, $viewName = null ) {
-        $view = FrameworkConfig::VIEWS_NAMESPACE
+        $view = FrameworkConfig::PARENT_DIR_PREFIX
+            . FrameworkConfig::VIEWS_NAMESPACE
             . $controllerName
             . DIRECTORY_SEPARATOR
             . ( $viewName ? $viewName : $actionName )
             . FrameworkConfig::PHP_EXTENSION;
 
         if ( $areaName != FrameworkConfig::DEFAULT_AREA ) {
-            $view = FrameworkConfig::AREAS_NAMESPACE
+            $view = FrameworkConfig::PARENT_DIR_PREFIX
+                . FrameworkConfig::AREAS_NAMESPACE
                 . $areaName
                 . FrameworkConfig::AREA_SUFFIX
-                . $view;
+                . str_replace( FrameworkConfig::PARENT_DIR_PREFIX, '', $view );
         }
 
         if ( !is_file( $view ) || !is_readable( $view ) ) {

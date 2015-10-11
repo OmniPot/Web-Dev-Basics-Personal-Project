@@ -51,6 +51,7 @@ class AppStructureConfig {
         $this->_actionsArray = $_actionsArray;
     }
 
+    // Methods
     public function setupConfig() {
         if ( !file_exists( FrameworkConfig::APP_STRUCTURE_NAME ) ||
             !is_readable( FrameworkConfig::APP_STRUCTURE_NAME )
@@ -59,7 +60,7 @@ class AppStructureConfig {
         } else {
             include_once FrameworkConfig::APP_STRUCTURE_NAME;
 
-            if ( empty( $expires ) && empty( $appStructure ) && empty( $actionsStructure ) ) {
+            if ( !isset( $expires ) || !isset( $appStructure ) || !isset( $actionsStructure ) ) {
                 throw new \Exception( 'App structure config contains invalid information' );
             }
 
@@ -83,11 +84,19 @@ class AppStructureConfig {
         file_put_contents( FrameworkConfig::APP_STRUCTURE_NAME, $content );
     }
 
-    // Methods
     private function registerAppStructure() {
-        foreach ( glob( FrameworkConfig::AREAS_NAMESPACE . '*' . FrameworkConfig::AREA_SUFFIX ) as $areaPath ) {
+        $globParam = FrameworkConfig::PARENT_DIR_PREFIX
+            . FrameworkConfig::AREAS_NAMESPACE
+            . '*' . FrameworkConfig::AREA_SUFFIX;
+
+        foreach ( glob( $globParam ) as $areaPath ) {
             if ( file_exists( $areaPath ) && is_readable( $areaPath ) ) {
-                $areaName = str_replace( [ FrameworkConfig::AREAS_NAMESPACE, FrameworkConfig::AREA_SUFFIX ], '', $areaPath );
+                $replaceable = [
+                    FrameworkConfig::PARENT_DIR_PREFIX,
+                    FrameworkConfig::AREAS_NAMESPACE,
+                    FrameworkConfig::AREA_SUFFIX
+                ];
+                $areaName = str_replace( $replaceable, '', $areaPath );
                 $this->_appStructure[ $areaName ] = [ ];
 
                 $this->registerDefaultAreaControllers();
@@ -101,11 +110,12 @@ class AppStructureConfig {
 
     private function registerDefaultAreaControllers() {
         $this->_appStructure[ ucfirst( FrameworkConfig::DEFAULT_AREA ) ] = [ ];
-        $globParam = FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION;
+        $globParam = FrameworkConfig::PARENT_DIR_PREFIX . FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION;
 
         foreach ( glob( $globParam ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
-                $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( FrameworkConfig::PHP_EXTENSION, '', $controllerPath );
+                $fullPath = FrameworkConfig::VENDOR_NAMESPACE .
+                    str_replace( [ FrameworkConfig::PARENT_DIR_PREFIX, FrameworkConfig::PHP_EXTENSION ], '', $controllerPath );
                 $this->_appStructure[ FrameworkConfig::DEFAULT_AREA ][ $fullPath ] = [ ];
             }
         }
@@ -114,7 +124,7 @@ class AppStructureConfig {
     private function registerAreaControllers( $areaPath, $areaName ) {
         foreach ( glob( $areaPath . FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
-                $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( FrameworkConfig::PHP_EXTENSION, '', $controllerPath );
+                $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( [ FrameworkConfig::PARENT_DIR_PREFIX, FrameworkConfig::PHP_EXTENSION ], '', $controllerPath );
                 $this->_appStructure[ $areaName ][ $fullPath ] = [ ];
 
                 $this->registerControllersActions( $areaName, $fullPath );

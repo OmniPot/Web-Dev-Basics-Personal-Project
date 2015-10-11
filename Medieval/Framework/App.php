@@ -44,8 +44,8 @@ class App {
 
     public function initAutoload() {
         spl_autoload_register( function ( $class ) {
-            $classPath = str_replace( [ '\\', '/' ], DIRECTORY_SEPARATOR, $class );
-            $classPath = str_replace( 'Medieval\\', '', $class . '.php' );
+            $separatorReplaced = str_replace( [ '\\', '/' ], DIRECTORY_SEPARATOR, $class );
+            $classPath = str_replace( 'Medieval', '..', $separatorReplaced . '.php' );
 
             if ( file_exists( $classPath ) && is_readable( $classPath ) ) {
                 require_once $classPath;
