@@ -1,7 +1,5 @@
-<link href='https://fonts.googleapis.com/css?family=MedievalSharp' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" type="text/css" href="/css/styles.css">
-
 <?php
+ini_set( 'display_errors', '1' );
 
 use Medieval\Framework\App;
 

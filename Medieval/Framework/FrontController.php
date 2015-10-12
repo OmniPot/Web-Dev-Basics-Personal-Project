@@ -107,11 +107,8 @@ class FrontController {
                 )
             );
 
-            $this->initController( $this->getUriParsedResult() );
-
-            View::setAreaName( $this->getUriParsedResult()->getAreaName() );
-            View::setControllerName( $this->getUriParsedResult()->getControllerName() );
-            View::setActionName( $this->getUriParsedResult()->getActionName() );
+            $view = View::getInstance();
+            $this->initController( $this->getUriParsedResult(), $view );
 
             call_user_func_array(
                 [
@@ -125,11 +122,7 @@ class FrontController {
         }
     }
 
-    /**
-     * @param RequestUriResult $requestUriResult
-     * @throws \Exception
-     */
-    private function initController( $requestUriResult ) {
+    private function initController( RequestUriResult $requestUriResult, View $view ) {
         if ( !$requestUriResult ) {
             throw new \Exception( 'Url parse error' );
         }
@@ -139,12 +132,11 @@ class FrontController {
             $requestUriResult->getControllerName()
         );
 
-        $controller = new $fullControllerName(
-            $requestUriResult->getAreaName(),
-            $requestUriResult->getControllerName(),
-            $requestUriResult->getActionName(),
-            $requestUriResult->getRequestParams()
-        );
+        $view->setViewsDir( DirectoryHelper::getViewDir(
+            $requestUriResult->getAreaName()
+        ) );
+
+        $controller = new $fullControllerName( $requestUriResult, $view );
 
         $this->setController( $controller );
     }

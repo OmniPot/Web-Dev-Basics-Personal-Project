@@ -39,13 +39,10 @@ class DirectoryHelper {
         return $controller;
     }
 
-    public static function getViewPath( $controllerName, $actionName, $areaName = null, $viewName = null ) {
+    public static function getViewDir( $areaName = null ) {
+
         $view = FrameworkConfig::PARENT_DIR_PREFIX
-            . FrameworkConfig::VIEWS_NAMESPACE
-            . $controllerName
-            . DIRECTORY_SEPARATOR
-            . ( $viewName ? $viewName : $actionName )
-            . FrameworkConfig::PHP_EXTENSION;
+            . FrameworkConfig::VIEWS_NAMESPACE;
 
         if ( $areaName != FrameworkConfig::DEFAULT_AREA ) {
             $view = FrameworkConfig::PARENT_DIR_PREFIX
@@ -55,8 +52,8 @@ class DirectoryHelper {
                 . str_replace( FrameworkConfig::PARENT_DIR_PREFIX, '', $view );
         }
 
-        if ( !is_file( $view ) || !is_readable( $view ) ) {
-            throw new \Exception( 'View not found' );
+        if ( !is_dir( $view ) || !is_readable( $view ) ) {
+            throw new \Exception( 'View directory not found' );
         }
 
         return $view;

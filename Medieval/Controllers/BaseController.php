@@ -3,14 +3,20 @@
 namespace Medieval\Controllers;
 
 use Medieval\Config\RoutingConfig;
-
 use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Config\DatabaseConfig;
+
 use Medieval\Framework\Database\Database;
+use Medieval\Framework\Routers\RequestUriResult;
+use Medieval\Framework\View;
 
 class BaseController {
 
-    protected $databaseInstance;
+    /** @var Database $_databaseInstance */
+    protected $_databaseInstance;
+
+    /** @var  View $_view */
+    protected $_view;
 
     protected $_areaName;
     protected $_controllerName;
@@ -20,13 +26,15 @@ class BaseController {
     protected $alreadyAuthorizedLocation = RoutingConfig::AUTHORIZED_REDIRECT;
     protected $unauthorizedLocation = RoutingConfig::UNAUTHORIZED_REDIRECT;
 
-    public function __construct( $areaName = null, $controllerName, $actionName, array $requestParams = [ ] ) {
-        $this->_areaName = $areaName;
-        $this->_controllerName = $controllerName;
-        $this->_actionName = $actionName;
-        $this->_requestParams = $requestParams;
+    public function __construct( RequestUriResult $requestParseResult, $view ) {
+        $this->_areaName = $requestParseResult->getAreaName();
+        $this->_controllerName = $requestParseResult->getControllerName();
+        $this->_actionName = $requestParseResult->getActionName();
 
-        $this->databaseInstance = Database::getInstance( DatabaseConfig::DB_INSTANCE_NAME );
+        $this->_requestParams = $requestParseResult->getRequestParams();
+        $this->_view = $view;
+
+        $this->_databaseInstance = Database::getInstance( DatabaseConfig::DB_INSTANCE_NAME );
     }
 
     protected function isLogged() {

@@ -1,7 +1,6 @@
-<?php /** @var Medieval\Areas\ProfileArea\ViewModels\ProfileViewModel $model */ ?>
-
+<?php /** @var Medieval\ViewModels\WelcomeViewModel $model */ ?>
 <div>
-    <a href="/home/welcome">Home</a>
+    <a href="/profile/me">Profile</a>
 
     <form action="/user/logout" method="POST">
         <input type="submit" name="logout" value="logout">

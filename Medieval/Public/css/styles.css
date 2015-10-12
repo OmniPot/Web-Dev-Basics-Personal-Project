@@ -1,5 +1,5 @@
 body {
-    font-family: 'MedievalSharp', cursive;
+    /*font-family: 'MedievalSharp', cursive;*/
 }
 
 div {
@@ -13,12 +13,9 @@ form {
 }
 
 input[type="text"], input[type="password"], input[type="submit"] {
-    width: 100%;
+    box-sizing: content-box;
+    width: 92%;
     padding: 2%;
     margin: 2%;
     border: 1px solid #ccc;
-}
-
-input[name="logout"] {
-    margin-top: 3%;
 }

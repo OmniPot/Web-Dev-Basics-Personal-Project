@@ -29,7 +29,6 @@ class UsersController extends BaseController {
 
     /**
      * @customRoute('user/login')
-     * @return View
      */
     public function loginPage() {
         if ( $this->isLogged() ) {
@@ -37,7 +36,9 @@ class UsersController extends BaseController {
         }
 
         $viewModel = new LoginViewModel();
-        return new View( $viewModel );
+
+        $this->_view->appendToLayout( 'layouts.welcome', 'users.loginPage', $viewModel );
+        $this->_view->render( 'layouts.welcome' );
     }
 
     /**
@@ -57,7 +58,7 @@ class UsersController extends BaseController {
             throw new \Exception( 'Password and confirmation do not match' );
         }
 
-        $userModel = new UserRepository( $this->databaseInstance );
+        $userModel = new UserRepository( $this->_databaseInstance );
         $userModel->register( $username, $password );
 
         $this->initLogin( $username, $password );
@@ -72,7 +73,9 @@ class UsersController extends BaseController {
         }
 
         $viewModel = new RegisterViewModel();
-        return new View( $viewModel );
+
+        $this->_view->appendToLayout( 'layouts.welcome', 'users.registerPage', $viewModel );
+        $this->_view->render( 'layouts.welcome' );
     }
 
     /**
@@ -86,7 +89,7 @@ class UsersController extends BaseController {
     }
 
     private function initLogin( $username, $password ) {
-        $userModel = new UserRepository( $this->databaseInstance );
+        $userModel = new UserRepository( $this->_databaseInstance );
 
         $userInfo = $userModel->login( $username, $password );
 

@@ -5,7 +5,6 @@ namespace Medieval\Areas\ProfileArea\Controllers;
 use Medieval\Areas\TestArea\Repositories\UserRepository;
 use Medieval\Controllers\BaseController;
 use Medieval\Areas\ProfileArea\ViewModels\ProfileViewModel;
-use Medieval\Framework\View;
 
 class ProfileController extends BaseController {
 
@@ -14,12 +13,13 @@ class ProfileController extends BaseController {
      * @customRoute('profile/me')
      */
     public function myProfile() {
-        $repo = new UserRepository( $this->databaseInstance );
+        $repo = new UserRepository( $this->_databaseInstance );
         $userInfo = $repo->getInfo( $_SESSION[ 'id' ] );
 
         $viewModel = new ProfileViewModel();
         $viewModel->setUsername( $userInfo[ 'username' ] );
 
-        return new View( $viewModel );
+        $this->_view->appendToLayout( 'layouts.profile', 'profile.myProfile', $viewModel );
+        $this->_view->render( 'layouts.profile' );
     }
 }

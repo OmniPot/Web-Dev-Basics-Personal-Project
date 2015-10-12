@@ -1,5 +1,4 @@
 <?php /** @var Medieval\Areas\TestArea\ViewModels\RegisterViewModel $model */ ?>
-<?= isset( $model ) ? $model->getError() : ''; ?>
 
 <div>
     <h2>Register or <span><a href="/user/login">login</a></span></h2>
