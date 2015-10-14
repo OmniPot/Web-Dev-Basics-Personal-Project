@@ -4,7 +4,7 @@ namespace Medieval\Config;
 
 class RoutingConfig {
 
-    private static $_customMappings = array();
+    private static $_customMappings = [ ];
 
     const ROUTING_TYPE = 'custom';
 

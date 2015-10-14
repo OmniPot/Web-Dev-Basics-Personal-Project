@@ -11,19 +11,16 @@ use Medieval\Framework\Routers\Router;
 class FrontController {
 
     private static $_instance = null;
-
     private $_requestUri;
     private $_requestMethod;
     private $_userRole;
     private $_postData;
 
-    /** @var BaseController $_controller */
+    /** @var $_controller BaseController */
     private $_controller;
-
-    /** @var Routers\Router $_router */
+    /** @var $_router Routers\Router */
     private $_router;
-
-    /** @var Routers\RequestUriResult $_uriParsedResult */
+    /** @var $_uriParsedResult Routers\RequestUriResult */
     private $_uriParsedResult;
 
     private function __construct( $router ) {
@@ -96,7 +93,6 @@ class FrontController {
     }
 
     public function dispatch() {
-
         try {
             $this->setUriParsedResult(
                 $this->getRouter()->processRequestUri(
@@ -108,16 +104,19 @@ class FrontController {
             );
 
             $view = View::getInstance();
+            $view->setAreaViewsDirectory(
+                DirectoryHelper::getViewsDirectory( $this->getUriParsedResult()->getAreaName() )
+            );
+            $view->setSharedViewsDirectory( DirectoryHelper::getSharedViewsDirectory() );
+
             $this->initController( $this->getUriParsedResult(), $view );
 
             call_user_func_array(
-                [
-                    $this->getController(),
-                    $this->getUriParsedResult()->getActionName()
-                ],
-                $this->getUriParsedResult()->getRequestParams() );
-
-        } catch ( \Exception $exception ) {
+                [ $this->getController(), $this->getUriParsedResult()->getActionName() ],
+                $this->getUriParsedResult()->getRequestParams()
+            );
+        }
+        catch ( \Exception $exception ) {
             echo $exception->getMessage();
         }
     }
@@ -131,10 +130,6 @@ class FrontController {
             $requestUriResult->getAreaName(),
             $requestUriResult->getControllerName()
         );
-
-        $view->setViewsDir( DirectoryHelper::getViewDir(
-            $requestUriResult->getAreaName()
-        ) );
 
         $controller = new $fullControllerName( $requestUriResult, $view );
 

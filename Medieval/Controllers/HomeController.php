@@ -3,7 +3,6 @@
 namespace Medieval\Controllers;
 
 use Medieval\Areas\TestArea\Repositories\UserRepository;
-
 use Medieval\ViewModels\WelcomeViewModel;
 
 class HomeController extends BaseController {

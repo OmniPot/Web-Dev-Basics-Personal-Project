@@ -39,7 +39,7 @@ class DirectoryHelper {
         return $controller;
     }
 
-    public static function getViewDir( $areaName = null ) {
+    public static function getViewsDirectory( $areaName = null ) {
 
         $view = FrameworkConfig::PARENT_DIR_PREFIX
             . FrameworkConfig::VIEWS_NAMESPACE;
@@ -57,5 +57,17 @@ class DirectoryHelper {
         }
 
         return $view;
+    }
+
+    public static function getSharedViewsDirectory() {
+
+        $directory = FrameworkConfig::PARENT_DIR_PREFIX
+            . FrameworkConfig::VIEWS_NAMESPACE;
+
+        if ( !is_dir( $directory ) || !is_readable( $directory ) ) {
+            throw new \Exception( 'View directory not found' );
+        }
+
+        return $directory;
     }
 }

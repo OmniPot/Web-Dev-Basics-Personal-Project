@@ -8,6 +8,8 @@
     </head>
 
     <body>
-        <?= $this->renderPartials( 'layouts.profile' ); ?>
+        <div>
+            <?= $this->renderPartial( 'users.registerPage' ); ?>
+        </div>
     </body>
 </html>

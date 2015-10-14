@@ -9,7 +9,7 @@ class RequestUriResult {
     private $_actionName;
     private $_requestParams;
 
-    public function __construct( $_areaName, $_controllerName, $_actionName, $_requestParams = array() ) {
+    public function __construct( $_areaName, $_controllerName, $_actionName, $_requestParams = [ ] ) {
         $this->setAreaName( $_areaName );
         $this->setControllerName( $_controllerName );
         $this->setActionName( $_actionName );

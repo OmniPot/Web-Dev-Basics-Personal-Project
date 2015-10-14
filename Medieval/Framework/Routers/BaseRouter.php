@@ -10,7 +10,7 @@ abstract class BaseRouter {
     private $_controllerName;
     private $_actionName;
 
-    protected $requestParams = array();
+    protected $requestParams = [ ];
 
     protected function __construct() {
 

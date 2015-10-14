@@ -17,15 +17,18 @@ class UserRepository extends BaseRepository {
             "INSERT INTO users(username, password, roleId)  VALUES(?, ?, ?)";
         $result = $this->databaseInstance->prepare( $registerUserQuery );
 
-        $result->execute( [
-            $username,
-            password_hash( $password, PASSWORD_DEFAULT ),
-            self::DEFAULT_USER_ROLE_ID
-        ] );
+        $result->execute(
+            [
+                $username,
+                password_hash( $password, PASSWORD_DEFAULT ),
+                self::DEFAULT_USER_ROLE_ID
+            ]
+        );
 
         if ( $result->rowCount() > 0 ) {
             $this->login( $username, $password );
-        } else {
+        }
+        else {
             throw new \Exception( 'Unsuccessful registration' );
         }
     }
@@ -87,11 +90,13 @@ class UserRepository extends BaseRepository {
         $updateQuery = "UPDATE users SET password = ?, username = ? WHERE id = ?";
         $result = $this->databaseInstance->prepare( $updateQuery );
 
-        $result->execute( [
-            $newUsername,
-            password_hash( $newPassword, PASSWORD_DEFAULT ),
-            $id
-        ] );
+        $result->execute(
+            [
+                $newUsername,
+                password_hash( $newPassword, PASSWORD_DEFAULT ),
+                $id
+            ]
+        );
 
         return $result->rowCount() > 0;
     }

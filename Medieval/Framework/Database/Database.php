@@ -7,7 +7,7 @@ use Medieval\Framework\Drivers\DriverFactory;
 class Database {
 
     /** @var Database[] $_instances */
-    private static $_instances = array();
+    private static $_instances = [ ];
 
     /** @var \PDO $database */
     private $database = null;

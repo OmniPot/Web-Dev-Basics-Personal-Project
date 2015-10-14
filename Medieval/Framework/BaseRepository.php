@@ -10,6 +10,7 @@ class BaseRepository {
     protected $databaseInstance;
 
     public function __construct( $databaseInstance ) {
+
         $this->databaseInstance = $databaseInstance;
     }
 }

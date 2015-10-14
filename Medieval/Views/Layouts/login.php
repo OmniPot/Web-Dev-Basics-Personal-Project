@@ -8,8 +8,8 @@
     </head>
 
     <body>
-        <?= $this->renderPartial( 'header' ); ?>
-        <?= $this->renderPartial( 'body' ); ?>
-        <?= $this->renderPartial( 'footer' ); ?>
+        <div>
+            <?= $this->renderPartial( 'users.loginPage' ); ?>
+        </div>
     </body>
 </html>

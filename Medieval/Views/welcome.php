@@ -1,4 +1,5 @@
 <?php /** @var Medieval\ViewModels\WelcomeViewModel $model */ ?>
+
 <div>
     <h2>Welcome, <?= htmlspecialchars( $model->getUsername() ); ?></h2>
 

@@ -52,7 +52,8 @@ class Router extends BaseRouter {
     public function processRequestUri( $uri, $method, $userRole, $postData ) {
         if ( RoutingConfig::ROUTING_TYPE != 'default' ) {
             $result = $this->processCustomRequestUri( $uri, $method, $userRole, $postData );
-        } else {
+        }
+        else {
             $result = $this->processDefaultRequestUri( $uri, $postData );
         }
 
@@ -111,7 +112,6 @@ class Router extends BaseRouter {
 
             $customUriMatch = array_slice( $uriParts, 0, count( $customUriParts ) ) == $customUriParts;
             $defaultUriMatch = array_slice( $uriParts, 0, count( $defaultUriParts ) ) == $defaultUriParts;
-
 
             if ( $customUriMatch || $defaultUriMatch ) {
 

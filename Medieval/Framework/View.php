@@ -9,7 +9,8 @@ class View {
     public $_data = [ ];
 
     private static $_instance;
-    private $_viewsDir;
+    private $_areaViewsDirectory;
+    private $_sharedViewsDirectory;
 
     private $_layoutPartials = [ ];
     private $_renderedPartials = [ ];
@@ -17,11 +18,16 @@ class View {
     private function __construct() {
     }
 
-    public function setViewsDir( $_viewsDir ) {
-        $this->_viewsDir = $_viewsDir;
+    public function setAreaViewsDirectory( $_areaViewsDirectory ) {
+        $this->_areaViewsDirectory = $_areaViewsDirectory;
+    }
+
+    public function setSharedViewsDirectory( $sharedViewsDirectory ) {
+        $this->_sharedViewsDirectory = $sharedViewsDirectory;
     }
 
     public function appendToLayout( $layoutName, $templateName, $model = null ) {
+
         if ( !$layoutName ) {
             throw new \Exception( 'Invalid or no layout name provided' );
         }
@@ -38,6 +44,7 @@ class View {
     }
 
     public function render( $layoutName, $returnAsString = false ) {
+
         if ( !$layoutName ) {
             throw new \Exception( 'Invalid or no layout name provided' );
         }
@@ -46,47 +53,72 @@ class View {
             foreach ( $partials as $partialName => $model ) {
 
                 $this->validateModelType( $model, $partialName );
-                $renderedPartial = $this->includeFile( $partialName );
+                $renderedPartial = $this->includeFile( $partialName, $model );
 
                 if ( $renderedPartial ) {
-                    $this->_renderedPartials[ $layoutName ][ $partialName ] = $renderedPartial;
+                    $this->_renderedPartials[ $partialName ] = $renderedPartial;
                 }
             }
         }
 
         if ( $returnAsString ) {
             return $this->includeFile( $layoutName );
-        } else {
+        }
+        else {
             echo $this->includeFile( $layoutName );
         }
+
+        return null;
     }
 
-    private function includeFile( $fileName ) {
-        $path = $this->viewPathToUpper( $fileName );
+    private function processFilePath( $fileName ) {
 
-        if ( file_exists( $path ) && is_readable( $path ) ) {
-            ob_start();
-            include $path;
-            return ob_get_clean();
-        } else {
-            throw new \Exception( 'View ' . $fileName . ' cannot be included', 500 );
-        }
-    }
+        $path = explode( '.', $fileName );
+        $templateName = array_pop( $path );
 
-    private function renderPartials( $layoutName ) {
-
-        if ( !isset( $this->_renderedPartials[ $layoutName ] ) ) {
-            throw new \Exception( 'No layout with name ' . $layoutName );
+        foreach ( $path as $partKey => $partValue ) {
+            $path[ $partKey ] = ucfirst( $partValue );
         }
 
-        $model = 'a';
+        $path[] = $templateName;
+        $path = implode( DIRECTORY_SEPARATOR, $path );
 
-        return implode( "\n", $this->_renderedPartials[ $layoutName ] );
+        $areaPath = $this->_areaViewsDirectory . $path . FrameworkConfig::PHP_EXTENSION;
+        $sharedPath = $this->_sharedViewsDirectory . $path . FrameworkConfig::PHP_EXTENSION;
+
+        if ( !file_exists( $areaPath ) || !is_readable( $areaPath ) ) {
+            if ( !file_exists( $sharedPath ) || !is_readable( $sharedPath ) ) {
+                throw new \Exception( 'View ' . $fileName . ' not found', 404 );
+            }
+
+            return $sharedPath;
+        }
+
+        return $areaPath;
     }
 
-    private function validateModelType( $model, $viewName = null ) {
+    private function includeFile( $fileName, $model = null ) {
 
-        $viewFile = $this->viewPathToUpper( $viewName );
+        $path = $this->processFilePath( $fileName );
+
+        ob_start();
+        include $path;
+
+        return ob_get_clean();
+    }
+
+    private function renderPartial( $partialName ) {
+
+        if ( isset( $this->_renderedPartials[ $partialName ] ) ) {
+            return $this->_renderedPartials[ $partialName ];
+        }
+
+        return null;
+    }
+
+    private function validateModelType( $model, $partialName = null ) {
+
+        $viewFile = $this->processFilePath( $partialName );
         $viewContent = file_get_contents( $viewFile );
 
         $typeRegex = ' /@var\s*.*\s+(' . FrameworkConfig::VENDOR_NAMESPACE . '\\.*?)\s+\s*.*/';
@@ -100,22 +132,6 @@ class View {
         }
 
         return $viewFile;
-    }
-
-    private function viewPathToUpper( $fileName ) {
-
-        $path = explode( '.', $fileName );
-        $templateName = array_pop( $path );
-
-        foreach ( $path as $partKey => $partValue ) {
-            $path[ $partKey ] = ucfirst( $partValue );
-        }
-
-        $path[] = $templateName;
-        $path = implode( DIRECTORY_SEPARATOR, $path );
-        $path = $this->_viewsDir . $path . FrameworkConfig::PHP_EXTENSION;
-
-        return $path;
     }
 
     public static function getInstance() {

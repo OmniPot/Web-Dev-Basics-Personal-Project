@@ -33,7 +33,8 @@ class FileHelper {
 
         if ( empty( $array ) ) {
             self::$_builder .= "[ ]" . $endLine;
-        } else {
+        }
+        else {
             self::$_builder .= "[";
 
             foreach ( $array as $key => $value ) {
@@ -43,10 +44,12 @@ class FileHelper {
 
                     if ( end( $array ) == $key ) {
                         self::appendContents( $value, true );
-                    } else {
+                    }
+                    else {
                         self::appendContents( $value );
                     }
-                } else {
+                }
+                else {
                     self::appendValue( $value );
                 }
             }

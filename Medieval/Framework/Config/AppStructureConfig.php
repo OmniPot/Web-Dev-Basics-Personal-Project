@@ -11,8 +11,8 @@ class AppStructureConfig {
 
     private static $_instance;
 
-    private $_appStructure = array();
-    private $_actionsArray = array();
+    private $_appStructure = [ ];
+    private $_actionsArray = [ ];
 
     private $_actionDataTemplate = [
         'customRoute' => [
@@ -32,7 +32,6 @@ class AppStructureConfig {
 
     // Properties
     private function __construct() {
-
     }
 
     public function getAppStructure() {
@@ -57,7 +56,8 @@ class AppStructureConfig {
             !is_readable( FrameworkConfig::APP_STRUCTURE_NAME )
         ) {
             $this->writeConfig();
-        } else {
+        }
+        else {
             include_once FrameworkConfig::APP_STRUCTURE_NAME;
 
             if ( !isset( $expires ) || !isset( $appStructure ) || !isset( $actionsStructure ) ) {
@@ -101,8 +101,8 @@ class AppStructureConfig {
 
                 $this->registerDefaultAreaControllers();
                 $this->registerAreaControllers( $areaPath, $areaName );
-
-            } else {
+            }
+            else {
                 throw new \Exception( 'Directory not found: ' . $areaPath );
             }
         }
@@ -115,27 +115,38 @@ class AppStructureConfig {
         foreach ( glob( $globParam ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
                 $fullPath = FrameworkConfig::VENDOR_NAMESPACE .
-                    str_replace( [ FrameworkConfig::PARENT_DIR_PREFIX, FrameworkConfig::PHP_EXTENSION ], '', $controllerPath );
+                    str_replace(
+                        [ FrameworkConfig::PARENT_DIR_PREFIX, FrameworkConfig::PHP_EXTENSION ],
+                        '',
+                        $controllerPath
+                    );
                 $this->_appStructure[ FrameworkConfig::DEFAULT_AREA ][ $fullPath ] = [ ];
             }
         }
     }
 
     private function registerAreaControllers( $areaPath, $areaName ) {
-        foreach ( glob( $areaPath . FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION ) as $controllerPath ) {
+        foreach ( glob(
+                      $areaPath . FrameworkConfig::CONTROLLERS_NAMESPACE . '*' . FrameworkConfig::PHP_EXTENSION
+                  ) as $controllerPath ) {
             if ( file_exists( $controllerPath ) && is_readable( $controllerPath ) ) {
-                $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace( [ FrameworkConfig::PARENT_DIR_PREFIX, FrameworkConfig::PHP_EXTENSION ], '', $controllerPath );
+                $fullPath = FrameworkConfig::VENDOR_NAMESPACE . str_replace(
+                        [ FrameworkConfig::PARENT_DIR_PREFIX, FrameworkConfig::PHP_EXTENSION ],
+                        '',
+                        $controllerPath
+                    );
                 $this->_appStructure[ $areaName ][ $fullPath ] = [ ];
 
                 $this->registerControllersActions( $areaName, $fullPath );
-                $this->registerControllersActions( FrameworkConfig::DEFAULT_AREA,
+                $this->registerControllersActions(
+                    FrameworkConfig::DEFAULT_AREA,
                     FrameworkConfig::VENDOR_NAMESPACE
                     . FrameworkConfig::CONTROLLERS_NAMESPACE
                     . FrameworkConfig::DEFAULT_CONTROLLER
                     . FrameworkConfig::CONTROLLER_SUFFIX
                 );
-
-            } else {
+            }
+            else {
                 throw new \Exception( 'File not found or is not readable: ' . $controllerPath );
             }
         }
@@ -175,7 +186,8 @@ class AppStructureConfig {
                     $propertyData = AnnotationParser::parseDoc(
                         $property->getDocComment(),
                         $this->_propertyDataTemplate,
-                        'property' );
+                        'property'
+                    );
                     $actionData[ 'customRoute' ][ 'bindingParams' ][ $className ][ $property->name ] = $propertyData;
                 }
             }
@@ -195,7 +207,8 @@ class AppStructureConfig {
 
         if ( !isset( $this->getAppStructure()[ $areaName ][ $fullControllerName ][ $actionName ] ) ) {
             throw new \Exception(
-                "Controller: $fullControllerName contains no method: $actionName" );
+                "Controller: $fullControllerName contains no method: $actionName"
+            );
         }
 
         $controller = DirectoryHelper::getControllerName( $fullControllerName );

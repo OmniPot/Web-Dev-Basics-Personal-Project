@@ -2,15 +2,13 @@
 
 namespace Medieval\Areas\TestArea\Controllers;
 
-use Medieval\Controllers\BaseController;
-use Medieval\Framework\View;
-
 use Medieval\Areas\TestArea\BindingModels\LoginBindingModel;
 use Medieval\Areas\TestArea\BindingModels\RegisterBindingModel;
 use Medieval\Areas\TestArea\Repositories\UserRepository;
-
-use Medieval\Areas\TestArea\ViewModels\RegisterViewModel;
 use Medieval\Areas\TestArea\ViewModels\LoginViewModel;
+use Medieval\Areas\TestArea\ViewModels\RegisterViewModel;
+use Medieval\Controllers\BaseController;
+use Medieval\Framework\View;
 
 class UsersController extends BaseController {
 
@@ -37,8 +35,8 @@ class UsersController extends BaseController {
 
         $viewModel = new LoginViewModel();
 
-        $this->_view->appendToLayout( 'layouts.welcome', 'users.loginPage', $viewModel );
-        $this->_view->render( 'layouts.welcome' );
+        $this->_view->appendToLayout( 'layouts.login', 'users.loginPage', $viewModel );
+        $this->_view->render( 'layouts.login' );
     }
 
     /**
@@ -74,8 +72,8 @@ class UsersController extends BaseController {
 
         $viewModel = new RegisterViewModel();
 
-        $this->_view->appendToLayout( 'layouts.welcome', 'users.registerPage', $viewModel );
-        $this->_view->render( 'layouts.welcome' );
+        $this->_view->appendToLayout( 'layouts.register', 'users.registerPage', $viewModel );
+        $this->_view->render( 'layouts.register' );
     }
 
     /**

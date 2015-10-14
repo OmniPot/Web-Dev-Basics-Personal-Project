@@ -8,8 +8,7 @@
     </head>
 
     <body>
-        <div>
-            <?= $this->renderPartials( 'layouts.welcome' ); ?>
-        </div>
+        <?= $this->renderPartial( 'profile.myProfile' ); ?>
+        <?= $this->renderPartial( 'footer' ); ?>
     </body>
 </html>

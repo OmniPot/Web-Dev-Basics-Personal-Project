@@ -3,9 +3,8 @@
 namespace Medieval\Controllers;
 
 use Medieval\Config\RoutingConfig;
-use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Config\DatabaseConfig;
-
+use Medieval\Framework\Config\FrameworkConfig;
 use Medieval\Framework\Database\Database;
 use Medieval\Framework\Routers\RequestUriResult;
 use Medieval\Framework\View;

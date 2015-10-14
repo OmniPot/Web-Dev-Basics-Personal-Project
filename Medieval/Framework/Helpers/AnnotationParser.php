@@ -59,7 +59,8 @@ class AnnotationParser {
         foreach ( $exploded as $key ) {
             if ( in_array( $key, self::$paramTypes ) ) {
                 $routeResult[ 'uriParams' ][] = $key;
-            } else {
+            }
+            else {
                 $routeResult[ 'uri' ] .= "$key/";
             }
         }
